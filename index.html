@@ -432,6 +432,17 @@
       font-size:15px;
       line-height:1.5;
     }
+    .dailyNote{
+  padding:14px 16px;
+  border:1px solid rgba(100,116,139,.35);
+  border-radius:16px;
+  background: rgba(241,245,249,.75);
+  color:#334155;
+  font-size:15px;
+  line-height:1.5;
+  font-weight:800;
+    }
+
   </style>
 </head>
 
@@ -1359,14 +1370,16 @@ function buildTomorrowReservations(){
 function showTomorrowPopup(){
   const { tomorrow, rows } = buildTomorrowReservations();
 
-  // 予約が無ければトーストだけ
-  if(rows.length === 0){
-    showToast(`明日（${formatYmdSlash(tomorrow)}）の予約はありません。`, "ok", 3500);
-    return;
-  }
+ dailyTitle.textContent = `明日（${formatYmdSlash(tomorrow)}）の予約`;
+dailyBody.innerHTML = `<div class="dailyNote">お疲れ様です。本日の未返却・未使用はなかったですか？明日の予約が入っている備品は以下の通りです。</div>`;
 
-  dailyTitle.textContent = `明日（${formatYmdSlash(tomorrow)}）の予約`;
-  dailyBody.innerHTML = "";
+if(rows.length === 0){
+  dailyBody.innerHTML += `<div class="dailyEmpty">明日（${formatYmdSlash(tomorrow)}）の予約はありません。</div>`;
+  try{ if(dailyModal.open) dailyModal.close(); }catch(e){}
+  dailyModal.showModal();
+  return;
+}
+
 
   for(const r of rows){
     const it = findItem(r.itemId);
