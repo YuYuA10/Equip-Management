@@ -1,0 +1,1901 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>備品予約管理</title>
+  <style>
+    :root{
+      /* Light base */
+      --page:#f6f7fb;
+      --card:#ffffff;
+      --card2:#fbfcff;
+      --border:#e6e9f2;
+      --border2:#dbe1ee;
+      --text:#0f172a;
+      --muted:#64748b;
+      --shadow:0 14px 38px rgba(15,23,42,.08);
+      --shadow2:0 8px 20px rgba(15,23,42,.06);
+      --radius:16px;
+
+      /* Accent */
+      --primary:#2563eb;
+      --primary2:#7c3aed;
+      --danger:#e11d48;
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --cyan:#06b6d4;
+
+      /* Status bg (table cells) */
+      --reservedBg:#f3f4f6; /* 予約（未貸出） */
+      --loanBg:#fff7ed;     /* 貸出中 */
+      --returnedBg:#ecfeff; /* 返却済 */
+      --overdue:#ef4444;    /* 期限超過枠 */
+      --hover:#eef2ff;      /* hover */
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
+      background: radial-gradient(1200px 520px at 20% -10%, rgba(37,99,235,.08), transparent 60%),
+                  radial-gradient(900px 480px at 90% 0%, rgba(124,58,237,.06), transparent 65%),
+                  var(--page);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    /* Header */
+    header{
+      position:sticky;top:0;z-index:20;
+      background:rgba(255,255,255,.82);
+      backdrop-filter: blur(12px);
+      border-bottom:1px solid var(--border);
+      box-shadow: 0 10px 24px rgba(15,23,42,.06);
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    main .wrap{padding-top:14px}
+
+    h1{
+      margin:0;
+      font-size:18px;
+      display:flex; align-items:center; gap:10px;
+      letter-spacing:.2px;
+    }
+    h1:before{
+      content:"";
+      width:10px;height:10px;border-radius:999px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      box-shadow: 0 0 0 3px rgba(37,99,235,.10);
+      display:inline-block;
+    }
+
+    /* Controls */
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    input,select,button{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      font-size:14px;
+      outline:none;
+      transition: box-shadow .12s ease, border-color .12s ease, transform .12s ease;
+    }
+    input:focus,select:focus{
+      border-color: rgba(37,99,235,.35);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+    }
+
+    button{
+      cursor:pointer;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+    }
+    button:hover{transform: translateY(-1px); box-shadow: var(--shadow2); border-color: var(--border2)}
+    button:active{transform: translateY(0px)}
+
+    button.primary{
+      background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(124,58,237,.92));
+      color:#fff;
+      border-color: rgba(37,99,235,.25);
+      box-shadow: 0 12px 28px rgba(37,99,235,.18);
+    }
+    button.primary:hover{box-shadow: 0 16px 34px rgba(37,99,235,.22)}
+    button.danger{
+      background: linear-gradient(135deg, rgba(225,29,72,.10), rgba(225,29,72,.06));
+      color: var(--danger);
+      border-color: rgba(225,29,72,.25);
+    }
+
+    .subrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+    /* Pills / Chips */
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:7px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.92);
+      font-size:12px;
+      color:var(--muted);
+      box-shadow: 0 6px 18px rgba(15,23,42,.05);
+      white-space:nowrap;
+    }
+
+    /* Badge */
+    .badge{
+      display:inline-block;
+      padding:3px 9px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      font-size:12px;
+      color:#334155;
+      background:#fff;
+    }
+    .badge.reserved{background:var(--reservedBg)}
+    .badge.loan{background:var(--loanBg)}
+    .badge.returned{background:var(--returnedBg)}
+    .badge.overdue{
+      outline:2px solid var(--overdue);
+      outline-offset:-2px;
+    }
+
+    /* Tabs */
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .tabbtn{
+      width:auto;
+      padding:9px 14px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.92);
+      font-size:13px;
+      color:#334155;
+      box-shadow: 0 6px 18px rgba(15,23,42,.05);
+    }
+    .tabbtn.active{
+      background: linear-gradient(135deg, rgba(37,99,235,.10), rgba(124,58,237,.08));
+      border-color: rgba(37,99,235,.22);
+      color:#1e3a8a;
+    }
+    .tabpane{display:none}
+    .tabpane.active{display:block}
+
+    /* Cards */
+    .card{
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px;
+    }
+
+    /* --- Stats cards --- */
+    .statsGrid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:14px;
+      margin-bottom:14px;
+    }
+    @media (max-width:980px){
+      .statsGrid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+    }
+    @media (max-width:520px){
+      .statsGrid{grid-template-columns:1fr;}
+    }
+
+    .statCard{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow: var(--shadow2);
+      padding:16px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-height:88px;
+    }
+    .statTitle{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:650;
+    }
+    .statValue{
+      margin-top:6px;
+      font-size:30px;
+      font-weight:800;
+      letter-spacing:.2px;
+      color:#0f172a;
+      line-height:1;
+    }
+    .iconWrap{
+      width:44px;height:44px;border-radius:14px;
+      display:grid;place-items:center;
+      border:1px solid rgba(15,23,42,.06);
+    }
+    .iconWrap.blue{background: rgba(37,99,235,.10)}
+    .iconWrap.green{background: rgba(22,163,74,.12)}
+    .iconWrap.amber{background: rgba(245,158,11,.14)}
+    .iconWrap.red{background: rgba(225,29,72,.10)}
+    .iconWrap svg{width:22px;height:22px}
+
+    /* Grid table */
+    .tableWrap{
+      overflow:auto;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      box-shadow: var(--shadow2);
+    }
+    table{
+      border-collapse:separate;
+      border-spacing:0;
+      width:max(900px,100%);
+      background:#fff;
+      font-size:12.5px;
+      color:#0f172a;
+    }
+    th,td{
+      border-bottom:1px solid var(--border);
+      border-right:1px solid var(--border);
+      padding:6px 8px;
+      vertical-align:top;
+      min-width:44px;
+      max-width:160px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    th:first-child,td:first-child{
+      position:sticky;left:0;z-index:5;
+      background:#fff;
+      min-width:260px;max-width:260px;
+      border-right:1px solid var(--border2);
+    }
+    thead th{
+      position:sticky;top:0;z-index:10;
+      background:#f1f5f9;
+      font-weight:700;
+    }
+    thead tr:nth-child(2) th{
+      top:30px;
+      font-weight:650;
+      color:#475569;
+      background:#f8fafc;
+    }
+
+    td.cell{cursor:pointer;position:relative}
+    td.cell.reserved{background:var(--reservedBg)}
+    td.cell.loan{background:var(--loanBg)}
+    td.cell.returned{background:var(--returnedBg)}
+    td.cell:hover{background:var(--hover) !important}
+    td.cell.overdue{
+      outline:2px solid var(--overdue);
+      outline-offset:-2px;
+    }
+
+    /* ★規制日（空き枠） */
+    td.cell.disabled{
+      background:
+        repeating-linear-gradient(
+          45deg,
+          rgba(100,116,139,.16) 0 10px,
+          rgba(100,116,139,.06) 10px 20px
+        );
+      color:#94a3b8;
+      cursor:not-allowed;
+    }
+    td.cell.disabled:hover{
+      background:
+        repeating-linear-gradient(
+          45deg,
+          rgba(100,116,139,.16) 0 10px,
+          rgba(100,116,139,.06) 10px 20px
+        ) !important;
+    }
+
+    /* Top scroll bar */
+    .topScroll{
+      overflow-x:auto;
+      overflow-y:hidden;
+      height:14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      box-shadow: var(--shadow2);
+    }
+    #topScrollInner{height:1px;}
+
+    /* List table */
+    .listTable{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:14px;
+      overflow:hidden;
+      background:#fff;
+      box-shadow: var(--shadow2);
+    }
+    .listTable table{width:100%;min-width:760px;background:#fff}
+    .listTable th{background:#f1f5f9;position:sticky;top:0;z-index:2}
+    .listTable th,.listTable td{padding:10px;font-size:13px}
+
+    /* modal */
+    dialog{
+      border:none;border-radius:18px;
+      width:min(720px,92vw);
+      box-shadow:var(--shadow);
+      padding:0;
+      background:#fff;
+      overflow:hidden;
+    }
+    dialog::backdrop{background:rgba(2,6,23,.45)}
+    .modalHead{
+      padding:14px 16px;border-bottom:1px solid var(--border);
+      background: radial-gradient(560px 220px at 10% 0%, rgba(37,99,235,.12), transparent 60%),
+                  radial-gradient(520px 220px at 90% 0%, rgba(124,58,237,.10), transparent 62%),
+                  #f8fafc;
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+    }
+    .modalBody{padding:14px 16px}
+    .modalFoot{
+      padding:14px 16px;border-top:1px solid var(--border);
+      background:#fff;
+      display:grid;grid-template-columns:1fr;gap:10px
+    }
+    @media (min-width:560px){.modalFoot{grid-template-columns:1fr 1fr 1fr}}
+    .xbtn{
+      width:40px;height:40px;border-radius:12px;
+      display:grid;place-items:center;background:#fff;border:1px solid var(--border)
+    }
+
+    .msg{margin-top:10px;font-size:13px}
+    .msg.error{color:var(--danger)}
+    .msg.ok{color:var(--ok)}
+
+    /* Toast */
+    #toast{
+      position:fixed; top:16px; right:16px;
+      z-index:9999;
+      max-width:min(420px, calc(100vw - 32px));
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      background:#fff;
+      color:#0f172a;
+      font-size:13px;
+      line-height:1.35;
+      display:none;
+    }
+    #toast.show{display:block; animation:toastIn .15s ease-out}
+    #toast.ok{border-color:rgba(22,163,74,.25); background:#f0fdf4; color:#065f46}
+    #toast.error{border-color:rgba(225,29,72,.25); background:#fff1f2; color:#9f1239}
+    @keyframes toastIn{from{transform:translateY(-6px); opacity:0}to{transform:translateY(0); opacity:1}}
+
+    /* ★追加：明日の予約ポップアップ（大きく＆見やすく） */
+    #dailyModal{
+      width: min(980px, 96vw);
+    }
+    #dailyModal .modalHead{
+      padding:18px 20px;
+    }
+    #dailyModal .modalBody{
+      padding:18px 20px;
+      max-height: 70vh;
+      overflow:auto;
+    }
+    #dailyModal .modalFoot{
+      padding:16px 20px;
+    }
+    #dailyTitle{
+      font-size:20px !important;
+      font-weight:900 !important;
+      letter-spacing:.2px;
+    }
+    .dailyBody{display:grid; gap:14px;}
+    .dailyRow{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      background:#fff;
+      box-shadow: var(--shadow2);
+    }
+    .dailyTop{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+    .dailyItem{
+      font-weight:900;
+      font-size:16px;
+      color:#0f172a;
+      line-height:1.25;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .dailyMeta{
+      margin-top:10px;
+      font-size:14.5px;
+      color:#334155;
+      line-height:1.5;
+    }
+    .dailyMeta .muted{color:var(--muted)}
+    .dailyEmpty{
+      padding:14px 16px;
+      border:1px dashed rgba(100,116,139,.35);
+      border-radius:16px;
+      background: rgba(241,245,249,.6);
+      color:#334155;
+      font-size:15px;
+      line-height:1.5;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="wrap">
+    <div style="display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:center;">
+      <h1>備品予約管理</h1>
+      <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+        <div style="min-width:180px;">
+          <label style="margin:0 0 6px;">表示月</label>
+          <input id="monthPicker" type="month" />
+        </div>
+        <span class="pill" id="statPill">—</span>
+        <span class="pill" id="limitPill">予約可能：—</span>
+      </div>
+    </div>
+
+    <div class="subrow">
+      <span class="pill">
+        色：
+        <span class="badge reserved">予約</span>
+        <span class="badge loan">貸出中</span>
+        <span class="badge returned">返却済</span>
+        <span class="badge overdue" style="margin-left:6px;">期限超過</span>
+      </span>
+
+      <button id="itemsBtn" style="width:auto;">備品管理</button>
+      <button id="notifBtn" style="width:auto;">返却通知ON</button>
+      <button id="clearBtn" class="danger" style="width:auto;">全データ削除</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tabbtn active" data-tab="tabGrid" role="tab">予約表</button>
+      <button class="tabbtn" data-tab="tabList" role="tab">一覧</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+
+    <!-- サマリー -->
+    <section class="statsGrid" aria-label="サマリー">
+      <div class="statCard">
+        <div>
+          <div class="statTitle">総備品数</div>
+          <div class="statValue" id="statTotal">—</div>
+        </div>
+        <div class="iconWrap blue" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <path d="M3.3 7l8.7 5 8.7-5"></path>
+            <path d="M12 22V12"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="statCard">
+        <div>
+          <div class="statTitle">本日利用可能</div>
+          <div class="statValue" id="statAvailable">—</div>
+        </div>
+        <div class="iconWrap green" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="statCard">
+        <div>
+          <div class="statTitle">貸出中（本日）</div>
+          <div class="statValue" id="statLoan">—</div>
+        </div>
+        <div class="iconWrap amber" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 7v6l4 2"></path>
+          </svg>
+        </div>
+      </div>
+
+      <div class="statCard">
+        <div>
+          <div class="statTitle">期限超過</div>
+          <div class="statValue" id="statOverdue">—</div>
+        </div>
+        <div class="iconWrap red" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#e11d48" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path>
+            <path d="M12 9v4"></path>
+            <path d="M12 17h.01"></path>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 予約表 -->
+    <section id="tabGrid" class="tabpane active">
+      <div class="card">
+        <div style="font-weight:800; font-size:16px;">日 × 備品</div>
+        <div class="hint">
+          セルをクリックすると、予約の追加・編集ができます（最大7日）。複数日予約の団体名は開始日（または月初）だけ表示します。<br>
+          ※新規予約は「翌月末」まで（右上に表示）。
+        </div>
+
+        <!-- 上スクロールバー -->
+        <div id="topScroll" class="topScroll" style="margin-top:12px;">
+          <div id="topScrollInner"></div>
+        </div>
+
+        <!-- 下スクロール（表本体） -->
+        <div id="gridScroll" class="tableWrap" style="margin-top:10px;">
+          <table id="grid"></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 一覧 -->
+    <section id="tabList" class="tabpane">
+      <div class="card">
+        <div style="font-weight:800; font-size:16px;">予約一覧（期間ごと）</div>
+        <div style="display:grid; gap:10px; margin-top:12px;">
+          <div>
+            <label>検索（備品名 / 団体名）</label>
+            <input id="searchInput" placeholder="例：マイク / IPC" />
+          </div>
+        </div>
+
+        <div class="listTable" style="margin-top:12px;">
+          <div style="max-height:560px; overflow:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>利用日</th>
+                  <th>備品</th>
+                  <th>団体名</th>
+                  <th>状態</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="listBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- 予約モーダル -->
+<dialog id="modal">
+  <div class="modalHead">
+    <div>
+      <div style="font-size:12px;color:var(--muted);">予約の詳細</div>
+      <div id="modalTitle" style="font-size:15px;font-weight:850;">—</div>
+    </div>
+    <button class="xbtn" id="closeModalBtn" title="閉じる">✕</button>
+  </div>
+
+  <div class="modalBody">
+    <div style="display:grid;gap:10px;">
+      <div>
+        <label>備品</label>
+        <select id="modalItem"></select>
+      </div>
+
+      <div>
+        <label>開始日</label>
+        <input id="modalStart" type="date" />
+      </div>
+
+      <div>
+        <label>終了日（最大7日）</label>
+        <input id="modalEnd" type="date" />
+        <div class="hint" id="modalRangeHint">—</div>
+      </div>
+
+      <div>
+        <label>団体名</label>
+        <input id="modalGroup" placeholder="例：軽音楽研究会IPC" />
+      </div>
+
+      <div>
+        <label>状態</label>
+        <select id="modalStatus">
+          <option value="reserved">予約（未貸出）</option>
+          <option value="loan">貸出中</option>
+          <option value="returned">返却済</option>
+        </select>
+      </div>
+
+      <div>
+        <label>伝票番号（表示しません・任意）</label>
+        <input id="modalSlip" placeholder="例：A-12345" />
+      </div>
+
+      <div id="modalMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="modalFoot">
+    <button id="modalDelete" class="danger">削除</button>
+    <button id="modalSave" class="primary">保存</button>
+    <button id="modalCancel">閉じる</button>
+  </div>
+</dialog>
+
+<!-- 備品管理モーダル（追加・名称変更） -->
+<dialog id="itemsModal">
+  <div class="modalHead">
+    <div>
+      <div style="font-size:12px;color:var(--muted);">設定</div>
+      <div style="font-size:15px;font-weight:850;">備品管理（追加 / 名称変更）</div>
+    </div>
+    <button class="xbtn" id="closeItemsModal" title="閉じる">✕</button>
+  </div>
+
+  <div class="modalBody">
+    <div style="display:grid; gap:12px;">
+      <div>
+        <label>備品を追加</label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <input id="newItemName" placeholder="例：譜面台 / A" style="flex:1; min-width:220px;" />
+          <button id="addItemBtn" style="width:auto;">追加</button>
+        </div>
+        <div class="hint">※IDは自動で採番されます（既存の最大ID+1）</div>
+      </div>
+
+      <div>
+        <label>備品一覧（名称変更）</label>
+        <div style="border:1px solid var(--border); border-radius:12px; overflow:auto; max-height:460px; background:#fff;">
+          <table style="width:100%; min-width:640px;">
+            <thead>
+              <tr>
+                <th style="background:#f1f5f9; position:sticky; top:0; z-index:2;">ID</th>
+                <th style="background:#f1f5f9; position:sticky; top:0; z-index:2;">名称</th>
+                <th style="background:#f1f5f9; position:sticky; top:0; z-index:2;"></th>
+              </tr>
+            </thead>
+            <tbody id="itemsTbody"></tbody>
+          </table>
+        </div>
+        <div class="hint">変更後は「保存」で確定します（予約データは itemId で紐付くので壊れません）</div>
+      </div>
+
+      <div id="itemsMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="modalFoot">
+    <button id="itemsClose2">閉じる</button>
+    <div></div>
+    <div></div>
+  </div>
+</dialog>
+
+<!-- ★追加：20:30に出す「明日の予約」ポップアップ（OKでしか閉じない） -->
+<dialog id="dailyModal">
+  <div class="modalHead">
+    <div>
+      <div style="font-size:12px;color:var(--muted);">リマインド</div>
+      <div id="dailyTitle">—</div>
+    </div>
+    <div style="width:40px;height:40px;"></div>
+  </div>
+
+  <div class="modalBody">
+    <div id="dailyBody" class="dailyBody"></div>
+  </div>
+
+  <div class="modalFoot">
+    <div></div>
+    <button id="dailyOkBtn" class="primary">OK</button>
+    <div></div>
+  </div>
+</dialog>
+
+<!-- トースト通知 -->
+<div id="toast" aria-live="polite"></div>
+
+<script>
+/* =========================================================
+   1) 初期備品
+   ========================================================= */
+const ITEMS_DEFAULT = [
+  { id: 1, name: "ワイヤレスセット / A" },
+  { id: 2, name: "ワイヤレスセット / B(便利コード）" },
+  { id: 3, name: "ワイヤレスセット / C" },
+  { id: 4, name: "マイクスタンド / A ワイヤレス用" },
+  { id: 5, name: "マイクスタンド / B ワイヤレス用" },
+  { id: 6, name: "マイクスタンド / C ワイヤレス用" },
+  { id: 7, name: "マイクスタンド / D 有線用" },
+  { id: 8, name: "卓上マイクスタンド / ﾜｲﾔﾚｽ用" },
+  { id: 9, name: "卓上マイクスタンド / 有線A・B用" },
+  { id: 10, name: "卓上マイクスタンド / 有線C・D用" },
+  { id: 11, name: "有線マイク / A" },
+  { id: 12, name: "有線マイク / B" },
+  { id: 13, name: "有線マイク / C" },
+  { id: 14, name: "有線マイク / D" },
+  { id: 15, name: "ﾏｲｸｹｰﾌﾞﾙ / A" },
+  { id: 16, name: "ﾏｲｸｹｰﾌﾞﾙ / B" },
+  { id: 17, name: "ﾏｲｸｹｰﾌﾞﾙ / C" },
+  { id: 18, name: "ﾏｲｸｹｰﾌﾞﾙ / D" },
+  { id: 19, name: "ﾏｲｸｹｰﾌﾞﾙ / E" },
+  { id: 20, name: "ﾏｲｸｹｰﾌﾞﾙ / F" },
+  { id: 21, name: "ﾏｲｸｹｰﾌﾞﾙ / G" },
+  { id: 22, name: "ﾏｲｸｹｰﾌﾞﾙ / H" },
+  { id: 23, name: "ﾏｲｸｹｰﾌﾞﾙ / I" },
+  { id: 24, name: "ﾏｲｸｹｰﾌﾞﾙ / J" },
+  { id: 25, name: "ﾏｲｸｹｰﾌﾞﾙ / K" },
+  { id: 26, name: "ﾏｲｸｹｰﾌﾞﾙ / L" },
+  { id: 27, name: "マイク用変換コネクタ / A" },
+  { id: 28, name: "マイク用変換コネクタ / B" },
+  { id: 29, name: "マイク用変換コネクタ / C" },
+  { id: 30, name: "マイク用変換コネクタ / D" },
+  { id: 31, name: "延長コード / A" },
+  { id: 32, name: "延長コード / B" },
+  { id: 33, name: "延長コード / C" },
+  { id: 34, name: "延長コード / D" },
+  { id: 35, name: "延長コード / E" },
+  { id: 36, name: "延長コード / F" },
+  { id: 37, name: "延長コード / G" },
+  { id: 39, name: "2股プラグ / A" },
+  { id: 40, name: "2股プラグ / B" },
+  { id: 41, name: "2股プラグ / C" },
+  { id: 42, name: "2股プラグ / D" },
+  { id: 43, name: "電源タップ / A" },
+  { id: 44, name: "電源タップ / B" },
+  { id: 45, name: "電源タップ / C" },
+  { id: 46, name: "電源タップ / D" },
+  { id: 47, name: "電源タップ / E" },
+  { id: 48, name: "電源タップ / F" },
+  { id: 49, name: "電源タップ / G" },
+  { id: 50, name: "電源タップ / H" },
+  { id: 51, name: "電源タップ / I" },
+  { id: 52, name: "電源タップ / J" },
+  { id: 53, name: "電源タップ / K" },
+  { id: 54, name: "電源タップ / L" },
+  { id: 55, name: "電源タップ / M" },
+  { id: 56, name: "スピーカー / A" },
+  { id: 57, name: "スピーカー / B" },
+  { id: 58, name: "スピーカー / C" },
+  { id: 59, name: "スピーカー / D" },
+  { id: 60, name: "スピーカー / E" },
+  { id: 61, name: "スピーカー / F" },
+  { id: 62, name: "スピーカー / G" },
+  { id: 63, name: "スピーカー / H" },
+  { id: 64, name: "スピーカースタンド / A" },
+  { id: 65, name: "スピーカースタンド / B" },
+  { id: 66, name: "スピーカースタンド / C" },
+  { id: 68, name: "ポータブルスピーカー" },
+  { id: 69, name: "床保護マット / A" },
+  { id: 70, name: "床保護マット / B" },
+];
+
+/* =========================================================
+   2) 共通ユーティリティ
+   ========================================================= */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function ymd(date){ return `${date.getFullYear()}-${pad2(date.getMonth()+1)}-${pad2(date.getDate())}`; }
+function fromYmd(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function daysInMonth(y,m){ return new Date(y,m,0).getDate(); } // m=1..12
+function weekdayJa(date){ return ["(日)","(月)","(火)","(水)","(木)","(金)","(土)"][date.getDay()]; }
+function formatDateJa(s){ const d=fromYmd(s); return `${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())} ${weekdayJa(d)}`; }
+function isValidYmd(s){ return /^\d{4}-\d{2}-\d{2}$/.test(String(s||"")); }
+function dayDiffInclusive(startYmd, endYmd){
+  const s=fromYmd(startYmd).getTime(), e=fromYmd(endYmd).getTime();
+  return Math.floor((e-s)/86400000)+1;
+}
+function eachDateInclusive(startYmd, endYmd, fn){
+  let cur=fromYmd(startYmd), end=fromYmd(endYmd);
+  while(cur.getTime()<=end.getTime()){
+    fn(ymd(cur));
+    cur=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate()+1);
+  }
+}
+function addDaysYmd(s, add){
+  const d = fromYmd(s);
+  return ymd(new Date(d.getFullYear(), d.getMonth(), d.getDate()+add));
+}
+function overlapsMonth(start, end, monthStart, monthEnd){
+  return !(end < monthStart || start > monthEnd);
+}
+function normalizeStatus(s){
+  if(s==="reserved"||s==="loan"||s==="returned") return s;
+  return "reserved";
+}
+function statusLabel(s){
+  s=normalizeStatus(s);
+  if(s==="loan") return "貸出中";
+  if(s==="returned") return "返却済";
+  return "予約";
+}
+function setMsg(el, text, kind){
+  el.textContent = text || "";
+  el.className = "msg" + (kind ? " " + kind : "");
+}
+function formatYmdSlash(s){
+  const d=fromYmd(s);
+  return `${d.getFullYear()}/${pad2(d.getMonth()+1)}/${pad2(d.getDate())}`;
+}
+/* ★翌月末（例：今日2/12 → 3/31） */
+function getReservationLimitYmd(base=new Date()){
+  const lim = new Date(base.getFullYear(), base.getMonth()+2, 0); // 翌月の月末
+  return ymd(lim);
+}
+
+/* ★HTMLエスケープ */
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+/* =========================================================
+   3) 備品（localStorage 管理：追加・名称変更）
+   ========================================================= */
+const ITEMS_KEY = "equip_items_v1";
+
+function loadItems(){
+  try{
+    const raw = localStorage.getItem(ITEMS_KEY);
+    if(raw){
+      const arr = JSON.parse(raw);
+      if(Array.isArray(arr) && arr.length){
+        return arr
+          .filter(x=>x && Number.isFinite(Number(x.id)) && String(x.name||"").trim())
+          .map(x=>({ id:Number(x.id), name:String(x.name).trim() }))
+          .sort((a,b)=>a.id-b.id);
+      }
+    }
+  }catch(e){ console.warn(e); }
+
+  localStorage.setItem(ITEMS_KEY, JSON.stringify(ITEMS_DEFAULT));
+  return [...ITEMS_DEFAULT].sort((a,b)=>a.id-b.id);
+}
+function saveItems(arr){
+  localStorage.setItem(ITEMS_KEY, JSON.stringify(arr));
+}
+let ITEMS_DATA = loadItems();
+
+function findItem(id){ return ITEMS_DATA.find(x=>x.id===id); }
+// ★表示用の連番（IDは変えない：予約データが壊れない）
+let DISPLAY_NO = new Map();
+
+function refreshDisplayNo(){
+  const sorted = [...ITEMS_DATA].sort((a,b)=>a.id-b.id);
+  DISPLAY_NO = new Map(sorted.map((it, idx)=> [it.id, idx+1]));
+}
+function dispNo(id){ return DISPLAY_NO.get(id) ?? id; }
+
+// ★表示ラベルは「連番」を使う
+function itemLabel(it){
+  return `#${pad2(dispNo(it.id))} ${it.name}`;
+}
+
+// 初回生成
+refreshDisplayNo();
+
+
+/* =========================================================
+   4) 予約（localStorage 管理）
+   ========================================================= */
+const STORAGE_KEY = "equip_reservations_tabs_v2"; // 期間/伝票番号対応
+
+function saveReservations(arr){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+}
+function buildMap(list){
+  const m=new Map();
+  for(const r of list) m.set(`${r.itemId}|${r.date}`, r);
+  return m;
+}
+
+function normalizeAndMigrate(raw){
+  let changed=false;
+
+  const cleaned = (Array.isArray(raw) ? raw : [])
+    .map(r=>{
+      if(!r) return null;
+      const itemId = Number(r.itemId);
+      const date = String(r.date||"").slice(0,10);
+      const group = String(r.group||"").trim();
+      if(!Number.isFinite(itemId) || !isValidYmd(date) || !group) return null;
+
+      const it = findItem(itemId);
+      const itemName = String(r.itemName || (it?it.name:"")).trim();
+
+      const status = normalizeStatus(r.status);
+      const slipNo = String(r.slipNo||"").trim();
+
+      let startDate = String(r.startDate||"").slice(0,10);
+      let endDate   = String(r.endDate||"").slice(0,10);
+
+      if(!isValidYmd(startDate)) startDate = "";
+      if(!isValidYmd(endDate)) endDate = "";
+
+      const createdAt = r.createdAt || new Date().toISOString();
+      const updatedAt = r.updatedAt || new Date().toISOString();
+
+      const rec = { itemId, itemName, date, group, status, slipNo, startDate, endDate, createdAt, updatedAt };
+
+      if(rec.startDate && rec.endDate){
+        if(rec.date < rec.startDate || rec.date > rec.endDate){
+          rec.startDate = rec.date;
+          rec.endDate = rec.date;
+          changed=true;
+        }
+      }
+      return rec;
+    })
+    .filter(Boolean);
+
+  const need = cleaned.filter(r=>!r.startDate || !r.endDate);
+  if(need.length){
+    const byKey = new Map();
+    for(const r of need){
+      const key = `${r.itemId}|${r.group}|${r.status}|${r.slipNo||""}`;
+      if(!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key).push(r);
+    }
+
+    for(const arr of byKey.values()){
+      arr.sort((a,b)=>a.date.localeCompare(b.date));
+
+      let run = [];
+      const flushRun = ()=>{
+        if(run.length===0) return;
+        for(let i=0; i<run.length; i+=7){
+          const chunk = run.slice(i, i+7);
+          const s = chunk[0].date;
+          const e = chunk[chunk.length-1].date;
+          for(const r of chunk){
+            if(r.startDate!==s || r.endDate!==e){
+              r.startDate = s;
+              r.endDate = e;
+              changed=true;
+            }
+          }
+        }
+        run = [];
+      };
+
+      for(let i=0; i<arr.length; i++){
+        const r = arr[i];
+        if(run.length===0){
+          run.push(r);
+        }else{
+          const prev = run[run.length-1].date;
+          const expected = addDaysYmd(prev, 1);
+          if(r.date === expected){
+            run.push(r);
+          }else{
+            flushRun();
+            run.push(r);
+          }
+        }
+      }
+      flushRun();
+    }
+  }
+
+  return { list: cleaned, changed };
+}
+
+function loadReservations(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    const {list, changed} = normalizeAndMigrate(parsed);
+    if(changed) saveReservations(list);
+    return list;
+  }catch(e){
+    console.warn(e);
+    return [];
+  }
+}
+
+/* =========================================================
+   5) Toast
+   ========================================================= */
+const toastEl = document.getElementById("toast");
+let toastTimer = null;
+function showToast(text, kind="ok", ms=2400){
+  if(!toastEl) return;
+  toastEl.textContent = text || "";
+  toastEl.className = `${kind} show`;
+  toastEl.style.display = "block";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{
+    toastEl.className = "";
+    toastEl.style.display = "none";
+  }, ms);
+}
+
+/* =========================================================
+   5.5) 返却件数カウント
+   ========================================================= */
+function countDueToday(){
+  const today = ymd(new Date());
+  const list = loadReservations();
+
+  const uniq = new Map();
+  for(const r of list){
+    const key = `${r.itemId}|${r.startDate}|${r.endDate}|${r.group}|${r.status}|${r.slipNo||""}`;
+    if(!uniq.has(key)) uniq.set(key, r);
+  }
+
+  let due = 0, overdue = 0;
+  for(const r of uniq.values()){
+    const st = normalizeStatus(r.status);
+    if(st!=="loan" || !r.endDate) continue;
+    if(today === r.endDate) due++;
+    if(today > r.endDate) overdue++;
+  }
+  return {due, overdue, today};
+}
+
+function remindDueOncePerDay(){
+  const {due, overdue, today} = countDueToday();
+  if(due===0 && overdue===0) return;
+
+  const key = "equip_due_reminded_" + today;
+  if(localStorage.getItem(key)) return;
+
+  showToast(`本日返却予定：${due}件 / 期限超過：${overdue}件`, overdue>0 ? "error" : "ok", 5000);
+  localStorage.setItem(key, "1");
+}
+
+/* =========================================================
+   6) Tabs / refs
+   ========================================================= */
+function setActiveTab(tabId){
+  document.querySelectorAll(".tabbtn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.tab===tabId);
+  });
+  document.querySelectorAll(".tabpane").forEach(p=>{
+    p.classList.toggle("active", p.id===tabId);
+  });
+}
+
+const monthPicker = document.getElementById("monthPicker");
+const statPill = document.getElementById("statPill");
+const limitPill = document.getElementById("limitPill");
+const grid = document.getElementById("grid");
+const gridScroll = document.getElementById("gridScroll");
+
+// stats cards
+const statTotalEl = document.getElementById("statTotal");
+const statAvailableEl = document.getElementById("statAvailable");
+const statLoanEl = document.getElementById("statLoan");
+const statOverdueEl = document.getElementById("statOverdue");
+
+// list
+const searchInput = document.getElementById("searchInput");
+const listBody = document.getElementById("listBody");
+
+// reservation modal
+const modal = document.getElementById("modal");
+const modalTitle = document.getElementById("modalTitle");
+const modalItem = document.getElementById("modalItem");
+const modalStart = document.getElementById("modalStart");
+const modalEnd = document.getElementById("modalEnd");
+const modalRangeHint = document.getElementById("modalRangeHint");
+const modalGroup = document.getElementById("modalGroup");
+const modalStatus = document.getElementById("modalStatus");
+const modalSlip = document.getElementById("modalSlip");
+const modalMsg = document.getElementById("modalMsg");
+const modalDelete = document.getElementById("modalDelete");
+
+// items modal
+const itemsBtn = document.getElementById("itemsBtn");
+const itemsModal = document.getElementById("itemsModal");
+const closeItemsModal = document.getElementById("closeItemsModal");
+const itemsClose2 = document.getElementById("itemsClose2");
+const itemsTbody = document.getElementById("itemsTbody");
+const newItemName = document.getElementById("newItemName");
+const addItemBtn = document.getElementById("addItemBtn");
+const itemsMsg = document.getElementById("itemsMsg");
+
+// notification btn
+const notifBtn = document.getElementById("notifBtn");
+
+// ★明日の予約ポップアップ
+const dailyModal = document.getElementById("dailyModal");
+const dailyTitle = document.getElementById("dailyTitle");
+const dailyBody  = document.getElementById("dailyBody");
+const dailyOkBtn = document.getElementById("dailyOkBtn");
+
+// ★OK以外で閉じない（Esc無効）
+dailyModal.addEventListener("cancel", (e)=> e.preventDefault());
+dailyOkBtn.addEventListener("click", ()=> dailyModal.close());
+
+// modal original state
+let modalOrigin = null; // { exists, itemId, start, end, createdAt }
+
+function getSelectedMonth(){
+  const v=monthPicker.value;
+  if(!v){ const now=new Date(); return {year:now.getFullYear(), month:now.getMonth()+1};}
+  const [y,m]=v.split("-").map(Number);
+  return {year:y, month:m};
+}
+
+function updateModalRangeHint(){
+  const s=modalStart.value;
+  const e=modalEnd.value || s;
+  const limitYmd = getReservationLimitYmd();
+
+  if(!s || !e){
+    modalRangeHint.textContent = `開始日・終了日を入れてください（最大7日） / 予約可能：～${formatYmdSlash(limitYmd)}`;
+    return;
+  }
+  const days=dayDiffInclusive(s,e);
+  if(days<=0) modalRangeHint.textContent=`終了日は開始日以降 / 予約可能：～${formatYmdSlash(limitYmd)}`;
+  else if(days>7) modalRangeHint.textContent=`期間：${days}日（※最大7日） / 予約可能：～${formatYmdSlash(limitYmd)}`;
+  else modalRangeHint.textContent=`期間：${days}日（両端含む） / 予約可能：～${formatYmdSlash(limitYmd)}`;
+}
+
+function updateModalTitle(){
+  const it=findItem(Number(modalItem.value)) || {id:Number(modalItem.value), name:"(不明)"};
+  const s=modalStart.value;
+  const e=modalEnd.value || s;
+  if(!s){
+    modalTitle.textContent = `… 備品：#${pad2(dispNo(it.id))} …`;
+    return;
+  }
+  const rangeTxt = (e && e!==s) ? `${formatDateJa(s)} ～ ${formatDateJa(e)}` : `${formatDateJa(s)}`;
+  modalTitle.textContent = `利用日：${rangeTxt} / 備品：#${pad2(it.id)} ${it.name}`;
+}
+
+function populateSelects(){
+  modalItem.innerHTML="";
+  for(const it of ITEMS_DATA){
+    const o=document.createElement("option");
+    o.value=it.id;
+    o.textContent=itemLabel(it);
+    modalItem.appendChild(o);
+  }
+}
+
+/* =========================================================
+   7) 上スクロール（同期）
+   ========================================================= */
+let doubleScrollInited = false;
+let doubleScrollSyncing = false;
+
+function ensureDoubleScroll(){
+  const top = document.getElementById("topScroll");
+  const topInner = document.getElementById("topScrollInner");
+  const bottom = document.getElementById("gridScroll");
+  if(!top || !topInner || !bottom) return;
+
+  const updateWidth = ()=>{
+    topInner.style.width = bottom.scrollWidth + "px";
+  };
+  updateWidth();
+  requestAnimationFrame(updateWidth);
+
+  if(doubleScrollInited) return;
+  doubleScrollInited = true;
+
+  top.addEventListener("scroll", ()=>{
+    if(doubleScrollSyncing) return;
+    doubleScrollSyncing = true;
+    bottom.scrollLeft = top.scrollLeft;
+    doubleScrollSyncing = false;
+  });
+
+  bottom.addEventListener("scroll", ()=>{
+    if(doubleScrollSyncing) return;
+    doubleScrollSyncing = true;
+    top.scrollLeft = bottom.scrollLeft;
+    doubleScrollSyncing = false;
+  });
+
+  window.addEventListener("resize", updateWidth);
+}
+
+/* =========================================================
+   8) 予約CRUD（期間）
+   ========================================================= */
+function deleteReservationExact(itemId, start, end){
+  const list=loadReservations();
+  const next = list.filter(r=>{
+    if(r.itemId!==itemId) return true;
+    if(r.startDate===start && r.endDate===end) return false;
+    return true;
+  });
+  const removed = list.length - next.length;
+  saveReservations(next);
+  return removed;
+}
+
+function saveReservationRange({newItemId, start, end, group, status, slipNo}){
+  const days = dayDiffInclusive(start, end);
+  if(days<=0) return {ok:false, reason:"終了日は開始日以降にしてね"};
+  if(days>7) return {ok:false, reason:`最大7日まで（今は${days}日）`};
+
+  // ★翌月末まで（それ以降は新規/日付変更NG）
+  const limitYmd = getReservationLimitYmd();
+  const outOfLimit = (start > limitYmd) || (end > limitYmd);
+
+  const origin = modalOrigin;
+  const sameAsOrigin =
+    origin && origin.exists &&
+    origin.itemId === newItemId &&
+    origin.start === start &&
+    origin.end === end;
+
+  if(outOfLimit && !sameAsOrigin){
+    return {ok:false, reason:`予約できるのは～${formatYmdSlash(limitYmd)}までです。`};
+  }
+
+  const list = loadReservations();
+  const map = buildMap(list);
+
+  const originKeyOk = (rec)=>{
+    if(!origin || !origin.exists) return false;
+    return rec.itemId===origin.itemId && rec.startDate===origin.start && rec.endDate===origin.end;
+  };
+
+  // 衝突チェック
+  const conflicts = [];
+  eachDateInclusive(start, end, (d)=>{
+    const rec = map.get(`${newItemId}|${d}`);
+    if(rec && !originKeyOk(rec)) conflicts.push(d);
+  });
+  if(conflicts.length){
+    const show = conflicts.slice(0,6).map(formatDateJa).join(" / ");
+    const more = conflicts.length>6 ? ` ほか${conflicts.length-6}件` : "";
+    return {ok:false, reason:`既に予約があります：${show}${more}`};
+  }
+
+  // 元予約削除
+  if(origin && origin.exists){
+    deleteReservationExact(origin.itemId, origin.start, origin.end);
+  }
+
+  const it=findItem(newItemId);
+  const nowIso=new Date().toISOString();
+
+  const next = loadReservations();
+  const baseCreatedAt = (origin && origin.exists && origin.createdAt) ? origin.createdAt : nowIso;
+
+  eachDateInclusive(start, end, (d)=>{
+    next.push({
+      itemId: newItemId,
+      itemName: it ? it.name : `備品${newItemId}`,
+      date: d,
+      group,
+      status: normalizeStatus(status),
+      slipNo: (slipNo||"").trim(),
+      startDate: start,
+      endDate: end,
+      createdAt: baseCreatedAt,
+      updatedAt: nowIso
+    });
+  });
+
+  saveReservations(next);
+  return {ok:true, days};
+}
+
+/* =========================================================
+   8.5) 返却通知（ブラウザ通知）
+   ========================================================= */
+const NOTIF_KEY = "equip_return_notif_enabled_v1";
+let notifTimers = [];
+
+function clearNotifTimers(){
+  for(const t of notifTimers) clearTimeout(t);
+  notifTimers = [];
+}
+
+function fireReturnNotification(){
+  const {due, overdue} = countDueToday();
+  if(due===0 && overdue===0) return;
+
+  try{
+    new Notification("備品返却の確認（10分前）", {
+      body: `本日返却予定：${due}件 / 期限超過：${overdue}件\n（一覧タブで確認できます）`
+    });
+  }catch(e){
+    console.warn(e);
+  }
+}
+
+/* ★任意関数を呼べるスケジューラ */
+function scheduleAt(hh, mm, fn){
+  const now = new Date();
+  let t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0, 0);
+  if(t <= now) t.setDate(t.getDate()+1);
+
+  const id = setTimeout(()=>{
+    try{ fn && fn(); }catch(e){ console.warn(e); }
+    scheduleAt(hh, mm, fn); // 毎日繰り返し
+  }, t - now);
+
+  notifTimers.push(id);
+}
+
+/* =========================================================
+   ★20:30 明日の予約ポップアップ
+   ========================================================= */
+function buildTomorrowReservations(){
+  const today = ymd(new Date());
+  const tomorrow = addDaysYmd(today, 1);
+
+  const list = loadReservations().filter(r => r.date === tomorrow);
+
+  // 期間予約ごとにユニーク化
+  const uniq = new Map();
+  for(const r of list){
+    const key = `${r.itemId}|${r.startDate}|${r.endDate}|${r.group}|${r.status}|${r.slipNo||""}`;
+    if(!uniq.has(key)) uniq.set(key, r);
+  }
+
+  const rows = Array.from(uniq.values())
+    .sort((a,b)=> a.itemId-b.itemId);
+
+  return { tomorrow, rows };
+}
+
+function showTomorrowPopup(){
+  const { tomorrow, rows } = buildTomorrowReservations();
+
+  // 予約が無ければトーストだけ
+  if(rows.length === 0){
+    showToast(`明日（${formatYmdSlash(tomorrow)}）の予約はありません。`, "ok", 3500);
+    return;
+  }
+
+  dailyTitle.textContent = `明日（${formatYmdSlash(tomorrow)}）の予約`;
+  dailyBody.innerHTML = "";
+
+  for(const r of rows){
+    const it = findItem(r.itemId);
+    const itemTxt = it ? itemLabel(it) : ("#"+pad2(r.itemId)+" "+(r.itemName||""));
+    const st = normalizeStatus(r.status);
+
+    const rangeTxt = (r.startDate && r.endDate && r.startDate !== r.endDate)
+      ? `${formatYmdSlash(r.startDate)} ～ ${formatYmdSlash(r.endDate)}`
+      : `${formatYmdSlash(r.startDate || r.date)}`;
+
+    const div = document.createElement("div");
+    div.className = "dailyRow";
+    div.innerHTML = `
+      <div class="dailyTop">
+        <div class="dailyItem">${escapeHtml(itemTxt)}</div>
+        <span class="badge ${st}">${statusLabel(st)}</span>
+      </div>
+      <div class="dailyMeta">
+        <div><span class="muted">団体：</span>${escapeHtml(r.group)}</div>
+        <div><span class="muted">期間：</span>${escapeHtml(rangeTxt)}</div>
+        ${r.slipNo ? `<div><span class="muted">伝票：</span>${escapeHtml(r.slipNo)}</div>` : ``}
+      </div>
+    `;
+    dailyBody.appendChild(div);
+  }
+
+  // 表示（OKでしか閉じない）
+  try{ if(dailyModal.open) dailyModal.close(); }catch(e){}
+  dailyModal.showModal();
+}
+
+function scheduleReturnNotifications(){
+  clearNotifTimers();
+
+  // ONでないなら何もしない
+  if(localStorage.getItem(NOTIF_KEY)!=="1") return;
+
+  // ★20:30：明日の予約ポップアップ（ページが開いている時だけ）
+  scheduleAt(20, 30, ()=>{
+    showTomorrowPopup();
+
+    // 通知許可があれば、通知も同時に出す（既存機能維持）
+    if(("Notification" in window) && Notification.permission==="granted"){
+      fireReturnNotification();
+    }
+  });
+}
+
+function updateNotifButtonLabel(){
+  if(!notifBtn) return;
+  const on = localStorage.getItem(NOTIF_KEY)==="1";
+  const perm = ("Notification" in window) ? Notification.permission : "unsupported";
+  if(perm==="unsupported"){
+    notifBtn.textContent = "通知非対応";
+    notifBtn.disabled = true;
+    return;
+  }
+  if(perm!=="granted"){
+    notifBtn.textContent = "返却通知ON";
+    return;
+  }
+  notifBtn.textContent = on ? "返却通知：ON" : "返却通知ON";
+}
+
+function enableReturnNotifications(){
+  if(!("Notification" in window)){
+    showToast("このブラウザは通知に対応していません。", "error");
+    return;
+  }
+  Notification.requestPermission().then(p=>{
+    if(p==="granted"){
+      localStorage.setItem(NOTIF_KEY, "1");
+      updateNotifButtonLabel();
+      showToast("返却通知をONにしました。", "ok");
+      scheduleReturnNotifications(); // すぐスケジュール
+    }else{
+      updateNotifButtonLabel();
+      showToast("通知が許可されませんでした。", "error");
+    }
+  });
+}
+
+/* =========================================================
+   9) サマリー（カード）
+   ========================================================= */
+function renderStats(){
+  const totalItems = ITEMS_DATA.length;
+
+  const today = ymd(new Date());
+  const list = loadReservations();
+  const map = buildMap(list);
+
+  let usedToday = 0;
+  let loanToday = 0;
+
+  for(const it of ITEMS_DATA){
+    const rec = map.get(`${it.id}|${today}`);
+    if(rec){
+      usedToday++;
+      if(normalizeStatus(rec.status)==="loan") loanToday++;
+    }
+  }
+
+  const availableToday = Math.max(0, totalItems - usedToday);
+  const {overdue} = countDueToday();
+
+  statTotalEl.textContent = String(totalItems);
+  statAvailableEl.textContent = String(availableToday);
+  statLoanEl.textContent = String(loanToday);
+  statOverdueEl.textContent = String(overdue);
+}
+
+/* =========================================================
+   10) レンダリング
+   ========================================================= */
+function renderAll(){
+  renderStats();
+  renderGrid();
+  renderList();
+}
+
+function renderGrid(){
+  const {year, month} = getSelectedMonth();
+  const list=loadReservations();
+  const map=buildMap(list);
+
+  const mk = `${year}-${pad2(month)}`;
+  const monthStart = `${year}-${pad2(month)}-01`;
+  const monthEnd = `${year}-${pad2(month)}-${pad2(daysInMonth(year, month))}`;
+
+  const monthCellCount = list.filter(r=>r.date>=monthStart && r.date<=monthEnd).length;
+  statPill.textContent = `表示月：${mk} / 登録セル数：${monthCellCount}`;
+
+  const limitYmd = getReservationLimitYmd();
+  if(limitPill) limitPill.textContent = `予約可能：～${formatYmdSlash(limitYmd)}`;
+
+  const dim=daysInMonth(year, month);
+  const thead=document.createElement("thead");
+  const tr1=document.createElement("tr");
+  const tr2=document.createElement("tr");
+
+  const th0=document.createElement("th"); th0.textContent="備品";
+  const th0b=document.createElement("th"); th0b.textContent="";
+  tr1.appendChild(th0); tr2.appendChild(th0b);
+
+  for(let d=1; d<=dim; d++){
+    const dt=new Date(year, month-1, d);
+
+    const th=document.createElement("th");
+    th.textContent=d;
+    tr1.appendChild(th);
+
+    const thw=document.createElement("th");
+    thw.textContent=weekdayJa(dt);
+    tr2.appendChild(thw);
+  }
+  thead.appendChild(tr1); thead.appendChild(tr2);
+
+  const today = ymd(new Date());
+
+  const tbody=document.createElement("tbody");
+  for(const it of ITEMS_DATA){
+    const tr=document.createElement("tr");
+    const tdName=document.createElement("td");
+    tdName.textContent=itemLabel(it);
+    tr.appendChild(tdName);
+
+    for(let d=1; d<=dim; d++){
+      const dt=new Date(year, month-1, d);
+      const dateStr=ymd(dt);
+
+      const td=document.createElement("td");
+      td.className="cell";
+      td.dataset.itemId=it.id;
+      td.dataset.date=dateStr;
+
+      const rec=map.get(`${it.id}|${dateStr}`);
+
+      if(rec){
+        const st=normalizeStatus(rec.status);
+        td.classList.add(st);
+
+        if(st==="loan" && rec.endDate && today > rec.endDate){
+          td.classList.add("overdue");
+        }
+
+        const shouldShowName =
+          (rec.startDate===dateStr) ||
+          (rec.startDate < monthStart && dateStr===monthStart);
+
+        td.textContent = shouldShowName ? (rec.group||"") : "";
+
+        const itNow = findItem(it.id);
+        const itemNm = itNow ? itNow.name : (rec.itemName||"");
+
+        const rangeTxt = (rec.startDate && rec.endDate && rec.startDate!==rec.endDate)
+          ? `${formatDateJa(rec.startDate)} ～ ${formatDateJa(rec.endDate)}`
+          : `${formatDateJa(dateStr)}`;
+
+        td.title =
+          `期間：${rangeTxt}\n備品：${itemNm}\n団体名：${rec.group}\n状態：${statusLabel(st)}\n（クリックで詳細）`;
+
+        td.addEventListener("click", ()=> openModal(it.id, dateStr));
+
+      }else{
+        td.textContent="";
+        td.title = `利用日：${formatDateJa(dateStr)}\n備品：${it.name}\n（空き）\n（クリックで追加）`;
+
+        // ★空き枠：翌月末を超える日は新規予約NG
+        if(dateStr > limitYmd){
+          td.classList.add("disabled");
+          td.title = `利用日：${formatDateJa(dateStr)}\n備品：${it.name}\n（空き）\n予約可能：～${formatYmdSlash(limitYmd)}`;
+          td.addEventListener("click", ()=>{
+            showToast(`予約できるのは～${formatYmdSlash(limitYmd)}までです。`, "error");
+          });
+        }else{
+          td.addEventListener("click", ()=> openModal(it.id, dateStr));
+        }
+      }
+
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+
+  grid.innerHTML="";
+  grid.appendChild(thead);
+  grid.appendChild(tbody);
+
+  // 描画後に幅を安定化
+  requestAnimationFrame(()=>{
+    ensureDoubleScroll();
+    requestAnimationFrame(ensureDoubleScroll);
+  });
+}
+
+function renderList(){
+  const {year, month} = getSelectedMonth();
+  const monthStart = `${year}-${pad2(month)}-01`;
+  const monthEnd = `${year}-${pad2(month)}-${pad2(daysInMonth(year, month))}`;
+  const q = (searchInput.value||"").trim().toLowerCase();
+
+  const list = loadReservations();
+
+  const uniq = new Map();
+  for(const r of list){
+    const key = `${r.itemId}|${r.startDate}|${r.endDate}|${r.group}|${r.status}|${r.slipNo||""}`;
+    if(!uniq.has(key)) uniq.set(key, r);
+  }
+
+  const today = ymd(new Date());
+
+  const rows = Array.from(uniq.values())
+    .filter(r=> overlapsMonth(r.startDate, r.endDate, monthStart, monthEnd))
+    .filter(r=>{
+      if(!q) return true;
+      const it = findItem(r.itemId);
+      const item=(it ? it.name : (r.itemName||"")).toLowerCase();
+      const group=(r.group||"").toLowerCase();
+      return item.includes(q) || group.includes(q);
+    })
+    .sort((a,b)=> a.startDate.localeCompare(b.startDate) || a.itemId-b.itemId);
+
+  listBody.innerHTML="";
+  if(rows.length===0){
+    const tr=document.createElement("tr");
+    tr.innerHTML = `<td colspan="5" style="color:var(--muted);">この月に該当する予約はありません。</td>`;
+    listBody.appendChild(tr);
+    return;
+  }
+
+  for(const r of rows){
+    const it=findItem(r.itemId);
+    const st=normalizeStatus(r.status);
+
+    const rangeTxt = (r.startDate!==r.endDate)
+      ? `${formatDateJa(r.startDate)} ～ ${formatDateJa(r.endDate)}`
+      : `${formatDateJa(r.startDate)}`;
+
+    const overdue = (st==="loan" && r.endDate && today > r.endDate);
+
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${rangeTxt}</td>
+      <td>${it ? itemLabel(it) : ("#"+pad2(r.itemId)+" "+(r.itemName||""))}</td>
+      <td>${r.group||""}</td>
+      <td><span class="badge ${st} ${overdue ? "overdue" : ""}">${statusLabel(st)}</span></td>
+      <td><button style="width:auto;">詳細</button></td>
+    `;
+    tr.querySelector("button").addEventListener("click", ()=>openModal(r.itemId, r.startDate));
+    listBody.appendChild(tr);
+  }
+}
+
+/* =========================================================
+   11) 予約モーダル
+   ========================================================= */
+function openModal(itemId, date){
+  const list=loadReservations();
+  const map=buildMap(list);
+  const rec = map.get(`${itemId}|${date}`);
+
+  populateSelects();
+
+  if(rec){
+    modalItem.value = String(rec.itemId);
+    modalStart.value = rec.startDate || rec.date;
+    modalEnd.value = rec.endDate || rec.date;
+    modalGroup.value = rec.group || "";
+    modalStatus.value = normalizeStatus(rec.status);
+    modalSlip.value = rec.slipNo || "";
+
+    modalOrigin = {
+      exists:true,
+      itemId: rec.itemId,
+      start: rec.startDate || rec.date,
+      end: rec.endDate || rec.date,
+      createdAt: rec.createdAt || null
+    };
+    modalDelete.disabled = false;
+    setMsg(modalMsg, "", "");
+  }else{
+    modalItem.value = String(itemId);
+    modalStart.value = date;
+    modalEnd.value = date;
+    modalGroup.value = "";
+    modalStatus.value = "reserved";
+    modalSlip.value = "";
+
+    modalOrigin = { exists:false, itemId, start: date, end: date, createdAt:null };
+    modalDelete.disabled = true;
+    setMsg(modalMsg, "", "");
+  }
+
+  updateModalRangeHint();
+  updateModalTitle();
+  modal.showModal();
+}
+function closeModal(){ modal.close(); }
+
+/* =========================================================
+   12) 備品管理モーダル
+   ========================================================= */
+function openItemsModal(){
+  setMsg(itemsMsg, "", "");
+  renderItemsTable();
+  itemsModal.showModal();
+}
+function closeItems(){
+  itemsModal.close();
+}
+
+function renderItemsTable(){
+  itemsTbody.innerHTML = "";
+
+  const rows = [...ITEMS_DATA].sort((a,b)=>a.id-b.id);
+  for(const it of rows){
+    const tr = document.createElement("tr");
+
+    const tdId = document.createElement("td");
+    tdId.style.padding = "10px";
+    tdId.textContent = `#${pad2(dispNo(it.id))}`;
+
+
+    const tdName = document.createElement("td");
+    tdName.style.padding = "10px";
+    const inp = document.createElement("input");
+    inp.value = it.name;
+    tdName.appendChild(inp);
+
+    const tdBtn = document.createElement("td");
+    tdBtn.style.padding = "10px";
+    const btn = document.createElement("button");
+    btn.style.width = "auto";
+    btn.textContent = "保存";
+    tdBtn.appendChild(btn);
+
+    btn.addEventListener("click", ()=>{
+      const nm = (inp.value||"").trim();
+      if(!nm){
+        setMsg(itemsMsg, "名称が空欄です。", "error");
+        return;
+      }
+      it.name = nm;
+      saveItems(ITEMS_DATA);
+      setMsg(itemsMsg, `保存しました：#${pad2(it.id)} ${it.name}`, "ok");
+
+      populateSelects();
+      renderAll();
+      showToast("備品名を更新しました。", "ok");
+    });
+
+    tr.appendChild(tdId);
+    tr.appendChild(tdName);
+    tr.appendChild(tdBtn);
+    itemsTbody.appendChild(tr);
+  }
+}
+
+addItemBtn.addEventListener("click", ()=>{
+  setMsg(itemsMsg, "", "");
+
+  const nm = (newItemName.value||"").trim();
+  if(!nm){
+    setMsg(itemsMsg, "追加する備品名を入れてください。", "error");
+    return;
+  }
+
+  const maxId = ITEMS_DATA.reduce((m,x)=>Math.max(m, Number(x.id)||0), 0);
+  const newIt = { id: maxId + 1, name: nm };
+
+  ITEMS_DATA.push(newIt);
+  ITEMS_DATA.sort((a,b)=>a.id-b.id);
+  saveItems(ITEMS_DATA);
+  refreshDisplayNo();
+
+
+  newItemName.value = "";
+  setMsg(itemsMsg, `追加しました：#${pad2(newIt.id)} ${newIt.name}`, "ok");
+
+  populateSelects();
+  renderAll();
+  renderItemsTable();
+  showToast("備品を追加しました。", "ok");
+});
+
+/* =========================================================
+   13) Events
+   ========================================================= */
+document.querySelectorAll(".tabbtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>setActiveTab(btn.dataset.tab));
+});
+
+monthPicker.addEventListener("change", renderAll);
+searchInput.addEventListener("input", renderList);
+
+document.getElementById("modalCancel").addEventListener("click", closeModal);
+document.getElementById("closeModalBtn").addEventListener("click", closeModal);
+
+[modalItem, modalStart, modalEnd].forEach(el=>{
+  el.addEventListener("change", ()=>{
+    if(!modalEnd.value) modalEnd.value = modalStart.value;
+    updateModalRangeHint();
+    updateModalTitle();
+  });
+});
+
+document.getElementById("modalSave").addEventListener("click", ()=>{
+  setMsg(modalMsg,"","");
+
+  const newItemId = Number(modalItem.value);
+  const start = modalStart.value;
+  const end = modalEnd.value || start;
+  const group = (modalGroup.value||"").trim();
+  const status = modalStatus.value;
+  const slipNo = (modalSlip.value||"").trim();
+
+  if(!newItemId) return setMsg(modalMsg,"備品を選んでね","error");
+  if(!start) return setMsg(modalMsg,"開始日を入れてね","error");
+  if(!end) return setMsg(modalMsg,"終了日を入れてね","error");
+  const days = dayDiffInclusive(start,end);
+  if(days<=0) return setMsg(modalMsg,"終了日は開始日以降にしてね","error");
+  if(days>7) return setMsg(modalMsg,`最大7日まで（今は${days}日）`,"error");
+  if(!group) return setMsg(modalMsg,"団体名を入れてね","error");
+
+  const res = saveReservationRange({newItemId, start, end, group, status, slipNo});
+  if(!res.ok) return setMsg(modalMsg, res.reason, "error");
+
+  renderAll();
+  closeModal();
+  showToast(`保存しました（${res.days}日）`, "ok");
+
+  scheduleReturnNotifications();
+});
+
+modalDelete.addEventListener("click", ()=>{
+  setMsg(modalMsg,"","");
+
+  const itemId = Number(modalItem.value);
+  const start = modalStart.value;
+  const end = modalEnd.value || start;
+
+  if(!itemId || !start || !end){
+    setMsg(modalMsg,"削除する期間（開始/終了）を入れてね","error");
+    return;
+  }
+
+  const removed = deleteReservationExact(itemId, start, end);
+  if(removed<=0){
+    setMsg(modalMsg,"削除対象が見つかりませんでした（期間が違う可能性があります）","error");
+    return;
+  }
+
+  renderAll();
+  closeModal();
+  showToast(`削除しました（${removed}件）`, "ok");
+
+  scheduleReturnNotifications();
+});
+
+itemsBtn.addEventListener("click", openItemsModal);
+closeItemsModal.addEventListener("click", closeItems);
+itemsClose2.addEventListener("click", closeItems);
+
+notifBtn.addEventListener("click", enableReturnNotifications);
+
+document.getElementById("clearBtn").addEventListener("click", ()=>{
+  if(!confirm("全データを削除します。よろしいですか？")) return;
+  saveReservations([]);
+  renderAll();
+  showToast("全データを削除しました。", "ok");
+  scheduleReturnNotifications();
+});
+
+/* =========================================================
+   14) init
+   ========================================================= */
+(function init(){
+  const now=new Date();
+  monthPicker.value=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+
+  populateSelects();
+  renderAll();
+
+  remindDueOncePerDay();
+
+  updateNotifButtonLabel();
+  scheduleReturnNotifications();
+})();
+</script>
+</body>
+</html>
