@@ -29,7 +29,7 @@
       /* Status bg (table cells) */
       --reservedBg:#d1d5dba6; /* 予約（未貸出） */
       --loanBg:#feecd6;     /* 貸出中 */
-      --returnedBg:#abd1ff; /* 返却済 */
+      --returnedBg:#abffd9; /* 返却済（指定） */
       --overdue:#ef4444;    /* 期限超過枠 */
       --hover:#eef2ff;      /* hover */
     }
@@ -144,6 +144,35 @@
       outline-offset:-2px;
     }
 
+    /* ★一覧の状態変更ボタン */
+    .statusBtn{
+      width:auto;
+      padding:8px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:12.5px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .statusBtn.small{ padding:9px 14px; border-radius:12px; font-size:13px; }
+    .statusBtn.loan{
+      background: var(--loanBg);
+      border-color: rgba(245,158,11,.35);
+      color:#92400e;
+    }
+    .statusBtn.returned{
+      background: var(--returnedBg);
+      border-color: rgba(22,163,74,.35);
+      color:#065f46;
+    }
+    .statusBtn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+      transform:none !important;
+      box-shadow:none !important;
+    }
+
     /* Tabs */
     .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     .tabbtn{
@@ -230,7 +259,12 @@
       border:1px solid var(--border);
       background:#fff;
       box-shadow: var(--shadow2);
+      max-height: calc(100vh - 340px);
     }
+    @media (max-width:520px){
+      .tableWrap{max-height: calc(100vh - 380px);}
+    }
+
     table{
       border-collapse:separate;
       border-spacing:0;
@@ -319,7 +353,7 @@
       background:#fff;
       box-shadow: var(--shadow2);
     }
-    .listTable table{width:100%;min-width:760px;background:#fff}
+    .listTable table{width:100%;min-width:920px;background:#fff}
     .listTable th{background:#f1f5f9;position:sticky;top:0;z-index:2}
     .listTable th,.listTable td{padding:10px;font-size:13px}
 
@@ -332,6 +366,18 @@
       background:#fff;
       overflow:hidden;
     }
+
+    /* ===== 予約モーダル内スクロール対応（閉じたら消える版） ===== */
+    #modal{ max-height: 92vh; }
+    #modal[open]{ display: flex; flex-direction: column; }
+    #modal .modalHead, #modal .modalFoot{ flex: 0 0 auto; }
+    #modal .modalBody{
+      flex: 1 1 auto;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      min-height: 0;
+    }
+
     dialog::backdrop{background:rgba(2,6,23,.45)}
     .modalHead{
       padding:14px 16px;border-bottom:1px solid var(--border);
@@ -360,7 +406,7 @@
     #toast{
       position:fixed; top:16px; right:16px;
       z-index:9999;
-      max-width:min(420px, calc(100vw - 32px));
+      max-width:min(520px, calc(100vw - 32px));
       padding:12px 14px;
       border-radius:14px;
       border:1px solid var(--border);
@@ -370,32 +416,20 @@
       font-size:13px;
       line-height:1.35;
       display:none;
+      white-space:pre-wrap;
     }
     #toast.show{display:block; animation:toastIn .15s ease-out}
     #toast.ok{border-color:rgba(22,163,74,.25); background:#f0fdf4; color:#065f46}
     #toast.error{border-color:rgba(225,29,72,.25); background:#fff1f2; color:#9f1239}
     @keyframes toastIn{from{transform:translateY(-6px); opacity:0}to{transform:translateY(0); opacity:1}}
 
-    /* ★追加：明日の予約ポップアップ（大きく＆見やすく） */
-    #dailyModal{
-      width: min(980px, 96vw);
-    }
-    #dailyModal .modalHead{
-      padding:18px 20px;
-    }
-    #dailyModal .modalBody{
-      padding:18px 20px;
-      max-height: 70vh;
-      overflow:auto;
-    }
-    #dailyModal .modalFoot{
-      padding:16px 20px;
-    }
-    #dailyTitle{
-      font-size:20px !important;
-      font-weight:900 !important;
-      letter-spacing:.2px;
-    }
+    /* ★明日の予約ポップアップ（大きく＆見やすく） */
+    #dailyModal{ width: min(980px, 96vw); }
+    #dailyModal .modalHead{ padding:18px 20px; }
+    #dailyModal .modalBody{ padding:18px 20px; max-height: 70vh; overflow:auto; }
+    #dailyModal .modalFoot{ padding:16px 20px; }
+    #dailyTitle{ font-size:20px !important; font-weight:900 !important; letter-spacing:.2px; }
+
     .dailyBody{display:grid; gap:14px;}
     .dailyRow{
       border:1px solid var(--border);
@@ -433,15 +467,31 @@
       line-height:1.5;
     }
     .dailyNote{
-  padding:14px 16px;
-  border:1px solid rgba(100,116,139,.35);
-  border-radius:16px;
-  background: rgba(241,245,249,.75);
-  color:#334155;
-  font-size:15px;
-  line-height:1.5;
-  font-weight:800;
+      padding:14px 16px;
+      border:1px solid rgba(100,116,139,.35);
+      border-radius:16px;
+      background: rgba(241,245,249,.75);
+      color:#334155;
+      font-size:15px;
+      line-height:1.5;
+      font-weight:800;
     }
+    /* ===== 一覧タブ：セル内を中央揃え（文字・ボタン含む） ===== */
+.listTable th,
+.listTable td{
+  text-align:center;
+  vertical-align:middle;
+}
+/* 一覧テーブル全体の文字サイズ */
+.listTable th,
+.listTable td{
+  font-size: 15px;   /* 例：13→15 */
+}
+/* 予約表（グリッド）のセル内を中央揃え（伝票番号の位置） */
+#grid td.cell{
+  text-align: center;        /* 横：中央 */
+  vertical-align: middle;    /* 縦：中央（topを上書き） */
+}
 
   </style>
 </head>
@@ -546,7 +596,7 @@
       <div class="card">
         <div style="font-weight:800; font-size:16px;">日 × 備品</div>
         <div class="hint">
-          セルをクリックすると、予約の追加・編集ができます（最大7日）。複数日予約の団体名は開始日（または月初）だけ表示します。<br>
+          セルをクリックすると、予約の追加・編集ができます（最大7日）。複数日予約の伝票番号は開始日（または月初）だけ表示します。<br>
           ※新規予約は「翌月末」まで（右上に表示）。
         </div>
 
@@ -568,9 +618,18 @@
         <div style="font-weight:800; font-size:16px;">予約一覧（期間ごと）</div>
         <div style="display:grid; gap:10px; margin-top:12px;">
           <div>
-            <label>検索（備品名 / 団体名）</label>
-            <input id="searchInput" placeholder="例：マイク / IPC" />
+            <label>検索（備品名 / 団体名 / 伝票）</label>
+            <input id="searchInput" placeholder="例：マイク / IPC / A-12345" />
           </div>
+        </div>
+
+        <!-- ★追加：一覧での一括状態変更 -->
+        <div class="subrow" style="margin-top:12px;">
+          <span class="pill" id="listSelPill">選択：0件</span>
+          <button id="listSelectAllBtn" style="width:auto;">表示中を全選択</button>
+          <button id="listClearSelBtn" style="width:auto;">選択解除</button>
+          <button id="batchLoanBtn" class="statusBtn loan" style="width:auto;" disabled>選択を貸出</button>
+          <button id="batchReturnBtn" class="statusBtn returned" style="width:auto;" disabled>選択を返却</button>
         </div>
 
         <div class="listTable" style="margin-top:12px;">
@@ -578,10 +637,13 @@
             <table>
               <thead>
                 <tr>
+                  <th style="width:44px;">✓</th>
                   <th>利用日</th>
                   <th>備品</th>
                   <th>団体名</th>
+                  <th>伝票</th>
                   <th>状態</th>
+                  <th>操作</th>
                   <th></th>
                 </tr>
               </thead>
@@ -612,6 +674,27 @@
         <select id="modalItem"></select>
       </div>
 
+      <!-- ★追加：複数備品 -->
+      <div>
+        <label style="display:flex; align-items:center; gap:10px; margin-bottom:0;">
+          <input id="modalMulti" type="checkbox" style="width:auto; transform: translateY(1px);" />
+          複数備品を同時に予約する
+        </label>
+
+        <div id="multiWrap" style="display:none; margin-top:10px; border:1px solid var(--border); border-radius:12px; padding:10px; background:#fff;">
+          <label>備品を検索（複数選択）</label>
+          <input id="multiSearch" placeholder="例：ワイヤレス / ケーブル / 電源" />
+          <div class="hint">※同じ期間・団体・状態・伝票番号で一括登録します（埋まっている備品は自動でスキップ）。</div>
+
+          <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+            <button type="button" id="multiAllBtn" style="width:auto;">全選択</button>
+            <button type="button" id="multiClearBtn" style="width:auto;">全解除（代表だけ残す）</button>
+          </div>
+
+          <div id="multiList" style="margin-top:10px; max-height:240px; overflow:auto; display:grid; gap:8px;"></div>
+        </div>
+      </div>
+
       <div>
         <label>開始日</label>
         <input id="modalStart" type="date" />
@@ -638,8 +721,8 @@
       </div>
 
       <div>
-        <label>伝票番号（表示しません・任意）</label>
-        <input id="modalSlip" placeholder="例：A-12345" />
+        <label>伝票番号（必須・セルに表示）</label>
+        <input id="modalSlip" placeholder="例：A-12345" required />
       </div>
 
       <div id="modalMsg" class="msg"></div>
@@ -720,6 +803,37 @@
     <div></div>
     <button id="dailyOkBtn" class="primary">OK</button>
     <div></div>
+  </div>
+</dialog>
+
+<!-- ★追加：期限選択つき「全データ削除」モーダル -->
+<dialog id="clearModal">
+  <div class="modalHead">
+    <div>
+      <div style="font-size:12px;color:var(--muted);">管理</div>
+      <div style="font-size:15px;font-weight:850;">データ削除</div>
+    </div>
+    <button class="xbtn" id="closeClearModal" title="閉じる">✕</button>
+  </div>
+
+  <div class="modalBody">
+    <div style="display:grid; gap:10px;">
+      <div>
+        <label>○○年○○月までのデータを削除（その月末まで）</label>
+        <input id="clearMonth" type="month" />
+        <div class="hint">
+          選択した月の「月末までに終了した予約」（終了日 ≤ 期限）を削除します。<br>
+          ※期限をまたぐ予約（終了日が期限より後）は削除しません。
+        </div>
+      </div>
+      <div id="clearMsg" class="msg"></div>
+    </div>
+  </div>
+
+  <div class="modalFoot">
+    <button id="clearAllBtn" class="danger">全削除</button>
+    <button id="clearDoBtn" class="danger">期限まで削除</button>
+    <button id="clearCancelBtn">閉じる</button>
   </div>
 </dialog>
 
@@ -852,10 +966,16 @@ function getReservationLimitYmd(base=new Date()){
   const lim = new Date(base.getFullYear(), base.getMonth()+2, 0); // 翌月の月末
   return ymd(lim);
 }
-
 /* ★HTMLエスケープ */
 function escapeHtml(s){
   return String(s||"").replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+/* ★指定YYYY-MMの月末YMD */
+function endOfMonthYmd(ym){
+  if(!/^\d{4}-\d{2}$/.test(String(ym||""))) return "";
+  const [y,m] = ym.split("-").map(Number);
+  const last = new Date(y, m, 0);
+  return ymd(last);
 }
 
 /* =========================================================
@@ -902,7 +1022,6 @@ function itemLabel(it){
 
 // 初回生成
 refreshDisplayNo();
-
 
 /* =========================================================
    4) 予約（localStorage 管理）
@@ -1101,10 +1220,26 @@ const statOverdueEl = document.getElementById("statOverdue");
 const searchInput = document.getElementById("searchInput");
 const listBody = document.getElementById("listBody");
 
+// ★追加：一覧バッチ操作
+const listSelPill = document.getElementById("listSelPill");
+const listSelectAllBtn = document.getElementById("listSelectAllBtn");
+const listClearSelBtn = document.getElementById("listClearSelBtn");
+const batchLoanBtn = document.getElementById("batchLoanBtn");
+const batchReturnBtn = document.getElementById("batchReturnBtn");
+let listSelectedKeys = new Set();
+let listRowPayload = new Map(); // key -> payload
+
 // reservation modal
 const modal = document.getElementById("modal");
 const modalTitle = document.getElementById("modalTitle");
 const modalItem = document.getElementById("modalItem");
+const modalMulti = document.getElementById("modalMulti");
+const multiWrap = document.getElementById("multiWrap");
+const multiSearch = document.getElementById("multiSearch");
+const multiList = document.getElementById("multiList");
+const multiAllBtn = document.getElementById("multiAllBtn");
+const multiClearBtn = document.getElementById("multiClearBtn");
+
 const modalStart = document.getElementById("modalStart");
 const modalEnd = document.getElementById("modalEnd");
 const modalRangeHint = document.getElementById("modalRangeHint");
@@ -1137,8 +1272,18 @@ const dailyOkBtn = document.getElementById("dailyOkBtn");
 dailyModal.addEventListener("cancel", (e)=> e.preventDefault());
 dailyOkBtn.addEventListener("click", ()=> dailyModal.close());
 
+// ★期限付き削除モーダル
+const clearModal = document.getElementById("clearModal");
+const closeClearModal = document.getElementById("closeClearModal");
+const clearMonth = document.getElementById("clearMonth");
+const clearMsg = document.getElementById("clearMsg");
+const clearAllBtn = document.getElementById("clearAllBtn");
+const clearDoBtn = document.getElementById("clearDoBtn");
+const clearCancelBtn = document.getElementById("clearCancelBtn");
+
 // modal original state
 let modalOrigin = null; // { exists, itemId, start, end, createdAt }
+let modalSelectedItemIds = new Set(); // ★複数選択用
 
 function getSelectedMonth(){
   const v=monthPicker.value;
@@ -1171,7 +1316,7 @@ function updateModalTitle(){
     return;
   }
   const rangeTxt = (e && e!==s) ? `${formatDateJa(s)} ～ ${formatDateJa(e)}` : `${formatDateJa(s)}`;
-  modalTitle.textContent = `利用日：${rangeTxt} / 備品：#${pad2(it.id)} ${it.name}`;
+  modalTitle.textContent = `利用日：${rangeTxt} / 備品：#${pad2(dispNo(it.id))} ${it.name}`;
 }
 
 function populateSelects(){
@@ -1181,6 +1326,66 @@ function populateSelects(){
     o.value=it.id;
     o.textContent=itemLabel(it);
     modalItem.appendChild(o);
+  }
+}
+
+/* =========================================================
+   ★複数備品UI
+   ========================================================= */
+function renderMultiList(){
+  if(!multiList) return;
+  const q = (multiSearch.value||"").trim().toLowerCase();
+  multiList.innerHTML = "";
+
+  const visible = ITEMS_DATA.filter(it=>{
+    if(!q) return true;
+    const s = (itemLabel(it)+" "+it.name).toLowerCase();
+    return s.includes(q);
+  });
+
+  for(const it of visible){
+    const row = document.createElement("label");
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "10px";
+    row.style.padding = "8px 10px";
+    row.style.border = "1px solid var(--border)";
+    row.style.borderRadius = "12px";
+    row.style.cursor = "pointer";
+    row.style.userSelect = "none";
+    row.style.background = "#fff";
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.style.width = "auto";
+    cb.value = String(it.id);
+    cb.checked = modalSelectedItemIds.has(it.id);
+
+    cb.addEventListener("change", ()=>{
+      const id = Number(cb.value);
+      if(cb.checked) modalSelectedItemIds.add(id);
+      else modalSelectedItemIds.delete(id);
+    });
+
+    const span = document.createElement("span");
+    span.textContent = itemLabel(it);
+
+    row.appendChild(cb);
+    row.appendChild(span);
+    multiList.appendChild(row);
+  }
+}
+
+function syncMultiMode(){
+  const on = !!modalMulti.checked;
+  if(multiWrap) multiWrap.style.display = on ? "block" : "none";
+
+  const repId = Number(modalItem.value);
+  if(on){
+    if(repId) modalSelectedItemIds.add(repId);
+    renderMultiList();
+  }else{
+    modalSelectedItemIds = new Set(repId ? [repId] : []);
   }
 }
 
@@ -1242,7 +1447,8 @@ function saveReservationRange({newItemId, start, end, group, status, slipNo}){
   if(days<=0) return {ok:false, reason:"終了日は開始日以降にしてね"};
   if(days>7) return {ok:false, reason:`最大7日まで（今は${days}日）`};
 
-  // ★翌月末まで（それ以降は新規/日付変更NG）
+  if(!(slipNo||"").trim()) return {ok:false, reason:"伝票番号を入れてね"};
+
   const limitYmd = getReservationLimitYmd();
   const outOfLimit = (start > limitYmd) || (end > limitYmd);
 
@@ -1265,7 +1471,6 @@ function saveReservationRange({newItemId, start, end, group, status, slipNo}){
     return rec.itemId===origin.itemId && rec.startDate===origin.start && rec.endDate===origin.end;
   };
 
-  // 衝突チェック
   const conflicts = [];
   eachDateInclusive(start, end, (d)=>{
     const rec = map.get(`${newItemId}|${d}`);
@@ -1277,7 +1482,6 @@ function saveReservationRange({newItemId, start, end, group, status, slipNo}){
     return {ok:false, reason:`既に予約があります：${show}${more}`};
   }
 
-  // 元予約削除
   if(origin && origin.exists){
     deleteReservationExact(origin.itemId, origin.start, origin.end);
   }
@@ -1307,6 +1511,133 @@ function saveReservationRange({newItemId, start, end, group, status, slipNo}){
   return {ok:true, days};
 }
 
+/* ★追加：複数備品一括保存（空いてる分だけ保存） */
+function conflictsForItem(itemId, start, end, map){
+  const origin = modalOrigin;
+  const conflicts = [];
+
+  const originKeyOk = (rec)=>{
+    if(!origin || !origin.exists) return false;
+    if(itemId !== origin.itemId) return false;
+    return rec.itemId===origin.itemId && rec.startDate===origin.start && rec.endDate===origin.end;
+  };
+
+  eachDateInclusive(start, end, (d)=>{
+    const rec = map.get(`${itemId}|${d}`);
+    if(rec && !originKeyOk(rec)) conflicts.push(d);
+  });
+  return conflicts;
+}
+
+function saveReservationRangeMulti({itemIds, start, end, group, status, slipNo}){
+  const uniqIds = Array.from(new Set((itemIds||[]).map(Number).filter(n=>Number.isFinite(n) && n>0)));
+
+  const days = dayDiffInclusive(start, end);
+  if(days<=0) return {ok:false, reason:"終了日は開始日以降にしてね"};
+  if(days>7) return {ok:false, reason:`最大7日まで（今は${days}日）`};
+  if(!uniqIds.length) return {ok:false, reason:"備品を1つ以上選んでね"};
+  if(!(slipNo||"").trim()) return {ok:false, reason:"伝票番号を入れてね"};
+
+  // 翌月末まで制限（既存ルール維持：範囲外は“新規”扱いNG）
+  const limitYmd = getReservationLimitYmd();
+  const outOfLimit = (start > limitYmd) || (end > limitYmd);
+  const origin = modalOrigin;
+
+  // outOfLimitを許すのは「元の予約そのまま（同一備品・同一期間）」の単体編集だけ
+  const isPureOriginEdit =
+    origin && origin.exists &&
+    uniqIds.length===1 &&
+    uniqIds[0]===origin.itemId &&
+    origin.start===start &&
+    origin.end===end;
+
+  if(outOfLimit && !isPureOriginEdit){
+    return {ok:false, reason:`予約できるのは～${formatYmdSlash(limitYmd)}までです。`};
+  }
+
+  const list = loadReservations();
+  const map = buildMap(list);
+
+  const okIds = [];
+  const failed = [];
+
+  for(const id of uniqIds){
+    const conf = conflictsForItem(id, start, end, map);
+    if(conf.length){
+      const show = conf.slice(0,6).map(formatDateJa).join(" / ");
+      const more = conf.length>6 ? ` ほか${conf.length-6}件` : "";
+      failed.push({itemId:id, reason:`既に予約があります：${show}${more}`});
+    }else{
+      okIds.push(id);
+    }
+  }
+
+  if(okIds.length===0){
+    return {ok:false, reason:`選択した備品がすべて埋まっています。\n（伝票：${slipNo}）`};
+  }
+
+  const nowIso = new Date().toISOString();
+
+  // originがあり、origin備品を保存し直す場合は先に削除（重複防止）
+  const originSelected = origin && origin.exists && uniqIds.includes(origin.itemId);
+  const originWillSave = origin && origin.exists && okIds.includes(origin.itemId);
+
+  if(origin && origin.exists && originWillSave){
+    deleteReservationExact(origin.itemId, origin.start, origin.end);
+  }
+
+  // 追加は現在の最新リストに対して
+  const next = loadReservations();
+  const baseCreatedAt = (origin && origin.exists && origin.createdAt) ? origin.createdAt : nowIso;
+
+  for(const itemId of okIds){
+    const it = findItem(itemId);
+    const createdAt = (origin && origin.exists && itemId===origin.itemId && origin.createdAt) ? origin.createdAt : baseCreatedAt;
+
+    eachDateInclusive(start, end, (d)=>{
+      next.push({
+        itemId,
+        itemName: it ? it.name : `備品${itemId}`,
+        date: d,
+        group,
+        status: normalizeStatus(status),
+        slipNo: (slipNo||"").trim(),
+        startDate: start,
+        endDate: end,
+        createdAt,
+        updatedAt: nowIso
+      });
+    });
+  }
+
+  saveReservations(next);
+
+  // originが存在し、origin備品を選択から外して保存した場合：
+  // 何か1つでも保存できたときは「置き換え」と見なしてoriginを削除（事故防止：全失敗なら残す）
+  if(origin && origin.exists && !originSelected && okIds.length>0){
+    deleteReservationExact(origin.itemId, origin.start, origin.end);
+  }
+
+  return {ok:true, days, savedIds: okIds, failed};
+}
+
+/* =========================================================
+   8.1) 期限指定削除（終了日 <= cutoff を削除）
+   ========================================================= */
+function clearReservationsUntil(cutoffYmd){
+  if(!isValidYmd(cutoffYmd)) return {ok:false, removed:0};
+
+  const list = loadReservations();
+  const next = list.filter(r=>{
+    const ed = String(r.endDate||"").slice(0,10);
+    if(isValidYmd(ed)) return ed > cutoffYmd;
+    return r.date > cutoffYmd;
+  });
+  const removed = list.length - next.length;
+  saveReservations(next);
+  return {ok:true, removed};
+}
+
 /* =========================================================
    8.5) 返却通知（ブラウザ通知）
    ========================================================= */
@@ -1331,7 +1662,6 @@ function fireReturnNotification(){
   }
 }
 
-/* ★任意関数を呼べるスケジューラ */
 function scheduleAt(hh, mm, fn){
   const now = new Date();
   let t = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0, 0);
@@ -1339,7 +1669,7 @@ function scheduleAt(hh, mm, fn){
 
   const id = setTimeout(()=>{
     try{ fn && fn(); }catch(e){ console.warn(e); }
-    scheduleAt(hh, mm, fn); // 毎日繰り返し
+    scheduleAt(hh, mm, fn);
   }, t - now);
 
   notifTimers.push(id);
@@ -1354,7 +1684,6 @@ function buildTomorrowReservations(){
 
   const list = loadReservations().filter(r => r.date === tomorrow);
 
-  // 期間予約ごとにユニーク化
   const uniq = new Map();
   for(const r of list){
     const key = `${r.itemId}|${r.startDate}|${r.endDate}|${r.group}|${r.status}|${r.slipNo||""}`;
@@ -1370,16 +1699,15 @@ function buildTomorrowReservations(){
 function showTomorrowPopup(){
   const { tomorrow, rows } = buildTomorrowReservations();
 
- dailyTitle.textContent = `明日（${formatYmdSlash(tomorrow)}）の予約`;
-dailyBody.innerHTML = `<div class="dailyNote">お疲れ様です。本日の未返却・未使用はなかったですか？明日の予約が入っている備品は以下の通りです。</div>`;
+  dailyTitle.textContent = `明日（${formatYmdSlash(tomorrow)}）の予約`;
+  dailyBody.innerHTML = `<div class="dailyNote">お疲れ様です。本日の未返却・未使用はなかったですか？明日の予約が入っている備品は以下の通りです。</div>`;
 
-if(rows.length === 0){
-  dailyBody.innerHTML += `<div class="dailyEmpty">明日（${formatYmdSlash(tomorrow)}）の予約はありません。</div>`;
-  try{ if(dailyModal.open) dailyModal.close(); }catch(e){}
-  dailyModal.showModal();
-  return;
-}
-
+  if(rows.length === 0){
+    dailyBody.innerHTML += `<div class="dailyEmpty">明日（${formatYmdSlash(tomorrow)}）の予約はありません。</div>`;
+    try{ if(dailyModal.open) dailyModal.close(); }catch(e){}
+    dailyModal.showModal();
+    return;
+  }
 
   for(const r of rows){
     const it = findItem(r.itemId);
@@ -1406,22 +1734,16 @@ if(rows.length === 0){
     dailyBody.appendChild(div);
   }
 
-  // 表示（OKでしか閉じない）
   try{ if(dailyModal.open) dailyModal.close(); }catch(e){}
   dailyModal.showModal();
 }
 
 function scheduleReturnNotifications(){
   clearNotifTimers();
-
-  // ONでないなら何もしない
   if(localStorage.getItem(NOTIF_KEY)!=="1") return;
 
-  // ★20:30：明日の予約ポップアップ（ページが開いている時だけ）
   scheduleAt(20, 30, ()=>{
     showTomorrowPopup();
-
-    // 通知許可があれば、通知も同時に出す（既存機能維持）
     if(("Notification" in window) && Notification.permission==="granted"){
       fireReturnNotification();
     }
@@ -1454,7 +1776,7 @@ function enableReturnNotifications(){
       localStorage.setItem(NOTIF_KEY, "1");
       updateNotifButtonLabel();
       showToast("返却通知をONにしました。", "ok");
-      scheduleReturnNotifications(); // すぐスケジュール
+      scheduleReturnNotifications();
     }else{
       updateNotifButtonLabel();
       showToast("通知が許可されませんでした。", "error");
@@ -1570,7 +1892,8 @@ function renderGrid(){
           (rec.startDate===dateStr) ||
           (rec.startDate < monthStart && dateStr===monthStart);
 
-        td.textContent = shouldShowName ? (rec.group||"") : "";
+        // セル表示＝伝票番号
+        td.textContent = shouldShowName ? (rec.slipNo||"") : "";
 
         const itNow = findItem(it.id);
         const itemNm = itNow ? itNow.name : (rec.itemName||"");
@@ -1580,7 +1903,7 @@ function renderGrid(){
           : `${formatDateJa(dateStr)}`;
 
         td.title =
-          `期間：${rangeTxt}\n備品：${itemNm}\n団体名：${rec.group}\n状態：${statusLabel(st)}\n（クリックで詳細）`;
+          `期間：${rangeTxt}\n備品：${itemNm}\n団体名：${rec.group}\n伝票番号：${rec.slipNo || "(未入力)"}\n状態：${statusLabel(st)}\n（クリックで詳細）`;
 
         td.addEventListener("click", ()=> openModal(it.id, dateStr));
 
@@ -1588,7 +1911,6 @@ function renderGrid(){
         td.textContent="";
         td.title = `利用日：${formatDateJa(dateStr)}\n備品：${it.name}\n（空き）\n（クリックで追加）`;
 
-        // ★空き枠：翌月末を超える日は新規予約NG
         if(dateStr > limitYmd){
           td.classList.add("disabled");
           td.title = `利用日：${formatDateJa(dateStr)}\n備品：${it.name}\n（空き）\n予約可能：～${formatYmdSlash(limitYmd)}`;
@@ -1609,11 +1931,96 @@ function renderGrid(){
   grid.appendChild(thead);
   grid.appendChild(tbody);
 
-  // 描画後に幅を安定化
   requestAnimationFrame(()=>{
     ensureDoubleScroll();
     requestAnimationFrame(ensureDoubleScroll);
   });
+}
+
+/* =========================================================
+   ★一覧：状態変更（貸出/返却）キーと更新
+   ========================================================= */
+function makeResKey(itemId, start, end, group, slipNo, createdAt){
+  return JSON.stringify([Number(itemId), String(start), String(end), String(group||""), String(slipNo||""), String(createdAt||"")]);
+}
+function makeResKeyLoose(itemId, start, end, group, slipNo){
+  return JSON.stringify([Number(itemId), String(start), String(end), String(group||""), String(slipNo||"")]);
+}
+function updateListSelUI(){
+  const n = listSelectedKeys.size;
+  if(listSelPill) listSelPill.textContent = `選択：${n}件`;
+  if(batchLoanBtn) batchLoanBtn.disabled = (n===0);
+  if(batchReturnBtn) batchReturnBtn.disabled = (n===0);
+}
+
+function applyStatusByTargets(targetPayloads, newStatus){
+  if(!targetPayloads || targetPayloads.length===0) return 0;
+
+  const list = loadReservations();
+  const nowIso = new Date().toISOString();
+  const ns = normalizeStatus(newStatus);
+
+  const exact = new Set();
+  const loose = new Set();
+
+  for(const p of targetPayloads){
+    const itemId = Number(p.itemId);
+    const start = String(p.start);
+    const end = String(p.end);
+    const group = String(p.group||"");
+    const slipNo = String(p.slipNo||"");
+    const createdAt = String(p.createdAt||"");
+
+    exact.add(makeResKey(itemId, start, end, group, slipNo, createdAt));
+    if(!createdAt) loose.add(makeResKeyLoose(itemId, start, end, group, slipNo));
+  }
+
+  let changed = 0;
+  for(const r of list){
+    const itemId = Number(r.itemId);
+    const start = String(r.startDate || r.date || "");
+    const end   = String(r.endDate   || r.date || "");
+    const group = String(r.group||"");
+    const slipNo = String(r.slipNo||"");
+    const createdAt = String(r.createdAt||"");
+
+    const kExact = makeResKey(itemId, start, end, group, slipNo, createdAt);
+    const kLoose = makeResKeyLoose(itemId, start, end, group, slipNo);
+
+    if(exact.has(kExact) || loose.has(kLoose)){
+      if(r.status !== ns){
+        r.status = ns;
+        r.updatedAt = nowIso;
+        changed++;
+      }
+    }
+  }
+
+  if(changed>0) saveReservations(list);
+  return changed;
+}
+
+function applyStatusToSelection(newStatus){
+  const targets = Array.from(listSelectedKeys).map(k=>listRowPayload.get(k)).filter(Boolean);
+  if(targets.length===0){
+    showToast("選択がありません。", "error");
+    return;
+  }
+  if(!confirm(`選択した${targets.length}件を「${statusLabel(newStatus)}」に変更します。よろしいですか？`)) return;
+
+  const changedCells = applyStatusByTargets(targets, newStatus);
+  renderAll();
+  showToast(`状態を更新しました：${targets.length}件（セル更新 ${changedCells}）`, "ok", 3200);
+  scheduleReturnNotifications();
+}
+
+function applyStatusToOne(key, newStatus){
+  const p = listRowPayload.get(key);
+  if(!p) return;
+  const changedCells = applyStatusByTargets([p], newStatus);
+  renderAll();
+  showToast(`状態を「${statusLabel(newStatus)}」に更新しました（セル更新 ${changedCells}）`, "ok", 2600);
+  scheduleReturnNotifications();
 }
 
 function renderList(){
@@ -1624,54 +2031,156 @@ function renderList(){
 
   const list = loadReservations();
 
+  // ★uniq：statusはキーに含めない（重複表示防止）。最新 updatedAt を優先
   const uniq = new Map();
   for(const r of list){
-    const key = `${r.itemId}|${r.startDate}|${r.endDate}|${r.group}|${r.status}|${r.slipNo||""}`;
-    if(!uniq.has(key)) uniq.set(key, r);
+    const start = r.startDate || r.date;
+    const end   = r.endDate   || r.date;
+    const key = makeResKey(r.itemId, start, end, r.group, r.slipNo, r.createdAt);
+
+    const prev = uniq.get(key);
+    if(!prev){
+      uniq.set(key, r);
+    }else{
+      const pa = String(prev.updatedAt||"");
+      const ra = String(r.updatedAt||"");
+      if(ra > pa) uniq.set(key, r);
+    }
   }
 
   const today = ymd(new Date());
 
   const rows = Array.from(uniq.values())
-    .filter(r=> overlapsMonth(r.startDate, r.endDate, monthStart, monthEnd))
+    .filter(r=> overlapsMonth((r.startDate||r.date), (r.endDate||r.date), monthStart, monthEnd))
     .filter(r=>{
       if(!q) return true;
       const it = findItem(r.itemId);
       const item=(it ? it.name : (r.itemName||"")).toLowerCase();
       const group=(r.group||"").toLowerCase();
-      return item.includes(q) || group.includes(q);
+      const slip=(r.slipNo||"").toLowerCase();
+      return item.includes(q) || group.includes(q) || slip.includes(q);
     })
-    .sort((a,b)=> a.startDate.localeCompare(b.startDate) || a.itemId-b.itemId);
+    .sort((a,b)=> (String(a.startDate||a.date)).localeCompare(String(b.startDate||b.date)) || a.itemId-b.itemId);
 
   listBody.innerHTML="";
+  listRowPayload = new Map();
+
   if(rows.length===0){
     const tr=document.createElement("tr");
-    tr.innerHTML = `<td colspan="5" style="color:var(--muted);">この月に該当する予約はありません。</td>`;
+    tr.innerHTML = `<td colspan="8" style="color:var(--muted);">この月に該当する予約はありません。</td>`;
     listBody.appendChild(tr);
+    listSelectedKeys.clear();
+    updateListSelUI();
     return;
   }
+
+  const visibleKeys = new Set();
 
   for(const r of rows){
     const it=findItem(r.itemId);
     const st=normalizeStatus(r.status);
 
-    const rangeTxt = (r.startDate!==r.endDate)
-      ? `${formatDateJa(r.startDate)} ～ ${formatDateJa(r.endDate)}`
-      : `${formatDateJa(r.startDate)}`;
+    const start = r.startDate || r.date;
+    const end   = r.endDate   || r.date;
 
-    const overdue = (st==="loan" && r.endDate && today > r.endDate);
+    const rangeTxt = (start !== end)
+      ? `${formatDateJa(start)} ～ ${formatDateJa(end)}`
+      : `${formatDateJa(start)}`;
+
+    const overdue = (st==="loan" && end && today > end);
+
+    const key = makeResKey(r.itemId, start, end, r.group, r.slipNo, r.createdAt);
+    visibleKeys.add(key);
+
+    const payload = {
+      itemId: r.itemId,
+      start,
+      end,
+      group: r.group || "",
+      slipNo: r.slipNo || "",
+      createdAt: r.createdAt || ""
+    };
+    listRowPayload.set(key, payload);
 
     const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${rangeTxt}</td>
-      <td>${it ? itemLabel(it) : ("#"+pad2(r.itemId)+" "+(r.itemName||""))}</td>
-      <td>${r.group||""}</td>
-      <td><span class="badge ${st} ${overdue ? "overdue" : ""}">${statusLabel(st)}</span></td>
-      <td><button style="width:auto;">詳細</button></td>
-    `;
-    tr.querySelector("button").addEventListener("click", ()=>openModal(r.itemId, r.startDate));
+
+    // チェック列
+    const tdC = document.createElement("td");
+    tdC.style.textAlign = "center";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = listSelectedKeys.has(key);
+    cb.addEventListener("change", ()=>{
+      if(cb.checked) listSelectedKeys.add(key);
+      else listSelectedKeys.delete(key);
+      updateListSelUI();
+    });
+    tdC.appendChild(cb);
+
+// 内容列
+const tdDate = document.createElement("td");
+tdDate.textContent = rangeTxt;
+
+const tdItem = document.createElement("td");
+tdItem.textContent = it ? itemLabel(it) : ("#"+pad2(r.itemId)+" "+(r.itemName||""));
+
+const tdGroup = document.createElement("td");
+tdGroup.textContent = r.group || "";
+
+// ★追加：伝票番号列
+const tdSlip = document.createElement("td");
+tdSlip.textContent = r.slipNo || "";
+
+const tdStatus = document.createElement("td");
+tdStatus.innerHTML = `<span class="badge ${st} ${overdue ? "overdue" : ""}">${statusLabel(st)}</span>`;
+
+// 操作列（貸出・返却）
+const tdOps = document.createElement("td");
+tdOps.style.whiteSpace = "nowrap";
+
+const btnLoan = document.createElement("button");
+btnLoan.className = "statusBtn loan small";
+btnLoan.textContent = "貸出";
+btnLoan.disabled = (st==="loan");
+btnLoan.addEventListener("click", ()=> applyStatusToOne(key, "loan"));
+
+const btnRet = document.createElement("button");
+btnRet.className = "statusBtn returned small";
+btnRet.textContent = "返却";
+btnRet.style.marginLeft = "8px";
+btnRet.disabled = (st==="returned");
+btnRet.addEventListener("click", ()=> applyStatusToOne(key, "returned"));
+
+tdOps.appendChild(btnLoan);
+tdOps.appendChild(btnRet);
+
+// 詳細ボタン列
+const tdDetail = document.createElement("td");
+const detailBtn = document.createElement("button");
+detailBtn.style.width = "auto";
+detailBtn.textContent = "詳細";
+detailBtn.addEventListener("click", ()=>openModal(r.itemId, start));
+tdDetail.appendChild(detailBtn);
+
+// ★append順（伝票を追加）
+tr.appendChild(tdC);
+tr.appendChild(tdDate);
+tr.appendChild(tdItem);
+tr.appendChild(tdGroup);
+tr.appendChild(tdSlip);     // ← 追加
+tr.appendChild(tdStatus);
+tr.appendChild(tdOps);
+tr.appendChild(tdDetail);
+
+
     listBody.appendChild(tr);
   }
+
+  // 表示中に存在しない選択は落とす（検索/月変更時の整合）
+  for(const k of Array.from(listSelectedKeys)){
+    if(!visibleKeys.has(k)) listSelectedKeys.delete(k);
+  }
+  updateListSelUI();
 }
 
 /* =========================================================
@@ -1683,6 +2192,11 @@ function openModal(itemId, date){
   const rec = map.get(`${itemId}|${date}`);
 
   populateSelects();
+
+  // ★複数選択初期化
+  modalMulti.checked = false;
+  if(multiSearch) multiSearch.value = "";
+  modalSelectedItemIds = new Set([Number(itemId)]);
 
   if(rec){
     modalItem.value = String(rec.itemId);
@@ -1700,7 +2214,12 @@ function openModal(itemId, date){
       createdAt: rec.createdAt || null
     };
     modalDelete.disabled = false;
-    setMsg(modalMsg, "", "");
+
+    if(!(rec.slipNo||"").trim()){
+      setMsg(modalMsg, "この予約は伝票番号が未入力です。保存するには伝票番号が必要です。", "error");
+    }else{
+      setMsg(modalMsg, "", "");
+    }
   }else{
     modalItem.value = String(itemId);
     modalStart.value = date;
@@ -1714,6 +2233,10 @@ function openModal(itemId, date){
     setMsg(modalMsg, "", "");
   }
 
+  // 代表備品を必ず含める
+  modalSelectedItemIds.add(Number(modalItem.value));
+
+  syncMultiMode();
   updateModalRangeHint();
   updateModalTitle();
   modal.showModal();
@@ -1742,7 +2265,6 @@ function renderItemsTable(){
     const tdId = document.createElement("td");
     tdId.style.padding = "10px";
     tdId.textContent = `#${pad2(dispNo(it.id))}`;
-
 
     const tdName = document.createElement("td");
     tdName.style.padding = "10px";
@@ -1796,7 +2318,6 @@ addItemBtn.addEventListener("click", ()=>{
   saveItems(ITEMS_DATA);
   refreshDisplayNo();
 
-
   newItemName.value = "";
   setMsg(itemsMsg, `追加しました：#${pad2(newIt.id)} ${newIt.name}`, "ok");
 
@@ -1816,6 +2337,18 @@ document.querySelectorAll(".tabbtn").forEach(btn=>{
 monthPicker.addEventListener("change", renderAll);
 searchInput.addEventListener("input", renderList);
 
+// ★一覧バッチ操作
+listSelectAllBtn.addEventListener("click", ()=>{
+  for(const k of listRowPayload.keys()) listSelectedKeys.add(k);
+  renderList();
+});
+listClearSelBtn.addEventListener("click", ()=>{
+  listSelectedKeys.clear();
+  renderList();
+});
+batchLoanBtn.addEventListener("click", ()=> applyStatusToSelection("loan"));
+batchReturnBtn.addEventListener("click", ()=> applyStatusToSelection("returned"));
+
 document.getElementById("modalCancel").addEventListener("click", closeModal);
 document.getElementById("closeModalBtn").addEventListener("click", closeModal);
 
@@ -1824,26 +2357,79 @@ document.getElementById("closeModalBtn").addEventListener("click", closeModal);
     if(!modalEnd.value) modalEnd.value = modalStart.value;
     updateModalRangeHint();
     updateModalTitle();
+
+    // ★複数ONなら代表備品を必ず含める
+    if(modalMulti.checked){
+      modalSelectedItemIds.add(Number(modalItem.value));
+      renderMultiList();
+    }else{
+      modalSelectedItemIds = new Set([Number(modalItem.value)]);
+    }
   });
+});
+
+// ★複数チェック切替
+modalMulti.addEventListener("change", ()=>{
+  modalSelectedItemIds.add(Number(modalItem.value));
+  syncMultiMode();
+});
+
+multiSearch.addEventListener("input", renderMultiList);
+
+multiAllBtn.addEventListener("click", ()=>{
+  for(const it of ITEMS_DATA) modalSelectedItemIds.add(it.id);
+  renderMultiList();
+});
+multiClearBtn.addEventListener("click", ()=>{
+  const rep = Number(modalItem.value);
+  modalSelectedItemIds = new Set(rep ? [rep] : []);
+  renderMultiList();
 });
 
 document.getElementById("modalSave").addEventListener("click", ()=>{
   setMsg(modalMsg,"","");
 
-  const newItemId = Number(modalItem.value);
   const start = modalStart.value;
   const end = modalEnd.value || start;
   const group = (modalGroup.value||"").trim();
   const status = modalStatus.value;
   const slipNo = (modalSlip.value||"").trim();
 
-  if(!newItemId) return setMsg(modalMsg,"備品を選んでね","error");
   if(!start) return setMsg(modalMsg,"開始日を入れてね","error");
   if(!end) return setMsg(modalMsg,"終了日を入れてね","error");
   const days = dayDiffInclusive(start,end);
   if(days<=0) return setMsg(modalMsg,"終了日は開始日以降にしてね","error");
   if(days>7) return setMsg(modalMsg,`最大7日まで（今は${days}日）`,"error");
   if(!group) return setMsg(modalMsg,"団体名を入れてね","error");
+  if(!slipNo) return setMsg(modalMsg,"伝票番号を入れてね","error");
+
+  // ★保存：単体 or 複数
+  if(modalMulti.checked){
+    const ids = Array.from(modalSelectedItemIds);
+    const res = saveReservationRangeMulti({itemIds: ids, start, end, group, status, slipNo});
+    if(!res.ok) return setMsg(modalMsg, res.reason, "error");
+
+    renderAll();
+    closeModal();
+
+    if(res.failed && res.failed.length){
+      const names = res.failed.slice(0,4).map(x=>{
+        const it=findItem(x.itemId);
+        return it ? itemLabel(it) : `#${x.itemId}`;
+      }).join(" / ");
+      const more = res.failed.length>4 ? ` ほか${res.failed.length-4}件` : "";
+      showToast(`保存しました（${res.days}日）\n成功：${res.savedIds.length}件 / 失敗：${res.failed.length}件\n失敗：${names}${more}`, "error", 7500);
+    }else{
+      showToast(`保存しました（${res.days}日） / ${res.savedIds.length}備品`, "ok", 3200);
+    }
+
+    scheduleReturnNotifications();
+    return;
+  }
+
+  // 単体
+  const newItemId = Number(modalItem.value);
+  if(!newItemId) return setMsg(modalMsg,"備品を選んでね","error");
 
   const res = saveReservationRange({newItemId, start, end, group, status, slipNo});
   if(!res.ok) return setMsg(modalMsg, res.reason, "error");
@@ -1886,11 +2472,56 @@ itemsClose2.addEventListener("click", closeItems);
 
 notifBtn.addEventListener("click", enableReturnNotifications);
 
+/* ★全データ削除ボタン → 期限選択モーダルを開く */
 document.getElementById("clearBtn").addEventListener("click", ()=>{
+  setMsg(clearMsg, "", "");
+  const now = new Date();
+  clearMonth.value = `${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+  clearModal.showModal();
+});
+
+function closeClear(){
+  try{ clearModal.close(); }catch(e){}
+}
+closeClearModal.addEventListener("click", closeClear);
+clearCancelBtn.addEventListener("click", closeClear);
+
+clearAllBtn.addEventListener("click", ()=>{
+  setMsg(clearMsg, "", "");
   if(!confirm("全データを削除します。よろしいですか？")) return;
   saveReservations([]);
   renderAll();
+  closeClear();
   showToast("全データを削除しました。", "ok");
+  scheduleReturnNotifications();
+});
+
+clearDoBtn.addEventListener("click", ()=>{
+  setMsg(clearMsg, "", "");
+
+  const ym = clearMonth.value;
+  if(!ym){
+    setMsg(clearMsg, "削除期限（月）を選択してください。", "error");
+    return;
+  }
+
+  const cutoff = endOfMonthYmd(ym);
+  if(!cutoff){
+    setMsg(clearMsg, "削除期限（月）の形式が不正です。", "error");
+    return;
+  }
+
+  if(!confirm(`${ym} の月末（${formatYmdSlash(cutoff)}）までに終了した予約を削除します。よろしいですか？`)) return;
+
+  const res = clearReservationsUntil(cutoff);
+  if(!res.ok){
+    setMsg(clearMsg, "削除に失敗しました。", "error");
+    return;
+  }
+
+  renderAll();
+  closeClear();
+  showToast(`削除しました（${res.removed}件）`, "ok");
   scheduleReturnNotifications();
 });
 
